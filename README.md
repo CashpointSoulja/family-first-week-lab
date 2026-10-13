@@ -27,13 +27,23 @@ Lilli's homepage currently invites families to join a waiting list. Whatever the
 ## Run it
 ```bash
 npm ci
-npm run dev          # http://localhost:5173
-npm test             # engine unit tests
-npm run build && npm run e2e   # browser tests (390 px and 1366 px, axe, keyboard)
+npm run dev          # build, then local Worker + Durable Object at http://localhost:8787
+npm run typecheck    # browser, Worker and test code
+npm test             # engine and command-reducer unit tests
+npm run test:api     # API tests against a real local Worker + SQLite Durable Object
+npm run eval         # consent eval, expected vs actual (must be all green)
+npm run eval:broken  # same eval with a deliberately broken consent rule (must turn red)
+npm run e2e          # browser tests at 390 px and 1366 px (axe, keyboard, reload, two tabs)
 npm run cf:dryrun    # Cloudflare Workers Free dry run (does not deploy)
 ```
 
-Stack: TypeScript, Vite, plain DOM (no framework), Vitest, Playwright and axe-core. It is a static-assets Worker on Cloudflare.
+Stack: TypeScript, Vite, plain DOM (no framework), Vitest, Playwright and axe-core, served by a Cloudflare Worker with one SQLite-backed Durable Object per visitor.
+
+## Backend
+
+All scenario state lives on the server, in a private SQLite-backed Durable Object keyed to a random visitor cookie, so a reload keeps it. The browser sends allowlisted commands and renders only what the server returns: strict JSON schema, a 2 KB size limit, same-origin writes, revision checks, idempotent command IDs, bounded history and audit, and fail-closed storage errors. The server enforces the consent transitions and works out the insight, weekly summary, coverage and export from current consent only. Details: [docs/BACKEND.md](docs/BACKEND.md).
+
+**The family / invited-person switch is a synthetic demo role, not sign-in.** It does not prove who gave consent. This is not production consent security.
 
 ## Licence
 Code is MIT. Fonts (DM Serif Display, Epilogue, Oooh Baby) are under the SIL Open Font License via @fontsource. The Lilli logo and brand are not covered by this licence.

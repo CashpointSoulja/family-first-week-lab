@@ -1,7 +1,4 @@
-import { HOUSEHOLDS, SCENARIOS, CATEGORIES } from './engine/fixtures';
-import { initialConsent } from './engine/consent';
-import { makeEvent } from './engine/events';
-import type { CategoryId, ConsentState, CopyVariant, Frequency, Household, ScenarioId, SensorId, SensorStatus, TrackedEvent } from './engine/types';
+import { derive, freshLabState, householdOf, scenarioOf, type Derived, type LabState } from './server/model';
 
 export type Route = 'start' | 'consent' | 'setup' | 'today' | 'week' | 'lab';
 export const ROUTES: { id: Route; label: string; step?: number }[] = [
@@ -13,67 +10,17 @@ export const ROUTES: { id: Route; label: string; step?: number }[] = [
   { id: 'lab', label: 'Lab' },
 ];
 
-export interface AppState {
+/** Server state (read-only copy of the last snapshot) plus browser-only UI fields. */
+export interface AppState extends LabState {
+  revision: number;
   route: Route;
-  householdId: string;
-  relationship: string;
-  goal: string;
-  scenarioId: ScenarioId;
-  consent: ConsentState;
-  sensors: Record<SensorId, SensorStatus>;
-  frequency: Frequency;
-  variant: CopyVariant;
-  view: 'family' | 'monitored';
-  draftShare: CategoryId[];
-  inviteAttempts: number;
-  checkIns: string[];
-  feedback: string | null;
+  draftShare: LabState['consent']['shared'];
   notice: string | null;
   error: string | null;
-  events: TrackedEvent[];
-  clock: number;
 }
 
-export function freshState(): AppState {
-  const hh = HOUSEHOLDS[0];
-  return {
-    route: 'start',
-    householdId: hh.id,
-    relationship: hh.defaultRelationship,
-    goal: hh.defaultGoal,
-    scenarioId: hh.defaultScenario,
-    consent: initialConsent(),
-    sensors: { ...SCENARIOS[hh.defaultScenario].sensors },
-    frequency: 'weekly',
-    variant: 'benefitFirst',
-    view: 'family',
-    draftShare: [],
-    inviteAttempts: 0,
-    checkIns: [],
-    feedback: null,
-    notice: null,
-    error: null,
-    events: [],
-    clock: 0,
-  };
-}
+export const placeholderState = (): AppState => ({ ...freshLabState(), revision: 0, route: 'start', draftShare: [], notice: null, error: null });
+export const placeholderDerived = (): Derived => derive(freshLabState());
 
-export const household = (s: AppState): Household => HOUSEHOLDS.find((h) => h.id === s.householdId)!;
-export const scenario = (s: AppState) => SCENARIOS[s.scenarioId];
-
-export function track(s: AppState, name: string, props: Record<string, string | number | boolean> = {}) {
-  s.clock += 1;
-  s.events.push(makeEvent(name, props, { household_id: s.householdId, actor_role: s.view, variant: s.variant, seq: s.clock }));
-}
-
-/** Sensors that matter for setup: the hub plus one per shared category. */
-export function requiredSensors(s: AppState): SensorId[] {
-  const shared = s.consent.status === 'accepted' ? s.consent.shared : [];
-  return ['hub', ...CATEGORIES.filter((c) => shared.includes(c.id)).map((c) => c.sensor)];
-}
-
-export function readiness(s: AppState) {
-  const req = requiredSensors(s);
-  const ready = req.filter((id) => s.sensors[id] === 'ready' || s.sensors[id] === 'lowBattery').length;
-  return { ready, total: req.length, complete: s.consent.status === 'accepted' && ready === req.length };
-}
+export const household = (s: AppState) => householdOf(s);
+export const scenario = (s: AppState) => scenarioOf(s);

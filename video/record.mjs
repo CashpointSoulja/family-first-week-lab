@@ -1,12 +1,12 @@
 // Records a real playthrough of the running app as timestamped JPEG frames with a visible pointer.
-// Usage: BASE_URL=http://localhost:4173 node video/record.mjs   (requires `playwright` resolvable)
+// Usage: BASE_URL=http://localhost:8787 node video/record.mjs   (requires `playwright` resolvable)
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const base = process.env.BASE_URL || 'http://localhost:4173';
+const base = process.env.BASE_URL || 'http://localhost:8787';
 const script = JSON.parse(readFileSync(join(here, 'script.json'), 'utf8'));
 const durs = JSON.parse(readFileSync(join(here, 'out/vo/durations.json'), 'utf8'));
 const framesDir = join(here, 'out/frames');
@@ -31,6 +31,7 @@ await page.addInitScript(() => {
   });
 });
 await page.goto(base + '/#/start');
+await page.waitForSelector('body[data-lab="ok"]');
 await page.waitForTimeout(800);
 
 const frames = [];
@@ -87,7 +88,8 @@ async function scrollToSel(sel) {
   await smoothScrollTo(box.top - 110);
 }
 async function run([kind, a, b]) {
-  if (kind === 'goto') { await page.goto(base + a); await page.waitForTimeout(300); return; }
+  if (kind === 'goto') { await page.goto(base + a); await page.waitForSelector('body[data-lab="ok"]'); await page.waitForTimeout(300); return; }
+  if (kind === 'reload') { await page.reload(); await page.waitForSelector('body[data-lab="ok"]'); await page.waitForTimeout(400); return; }
   if (kind === 'wait') { await page.waitForTimeout(a); return; }
   if (kind === 'scrollBy') { const y = await page.evaluate(() => scrollY); await smoothScrollTo(y + a); return; }
   if (kind === 'scrollTo') { await scrollToSel(a); return; }

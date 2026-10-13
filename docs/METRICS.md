@@ -1,6 +1,6 @@
 # Metrics
 
-All definitions are proposals. The prototype emits these events into an in-memory log (see the Lab); nothing is sent anywhere. **No values are reported here because no real data exists.** The Lab funnel uses a synthetic cohort only to illustrate denominators.
+All definitions are proposals. The prototype records these events in the visitor's own server-side lab session (capped at 200; see the Lab). Nothing goes to an analytics service. **No values are reported here because no real data exists.** The Lab funnel uses a synthetic cohort only to illustrate denominators.
 
 ## Common event properties
 `household_id` (pseudonymous), `actor_role` (`family` | `monitored`), `variant` (`setupFirst` | `benefitFirst`), `seq`, `synthetic` (always `true` in this prototype).

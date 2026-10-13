@@ -11,5 +11,6 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "tests/unit"]
+  "include": ["src"],
+  "exclude": ["src/worker"]
 }

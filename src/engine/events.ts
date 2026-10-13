@@ -1,6 +1,6 @@
 import type { TrackedEvent } from './types';
 
-/** Event catalogue for the instrumentation preview. Nothing is sent anywhere: events stay in memory. */
+/** Event catalogue for the instrumentation preview. Events are stored only in the visitor's own lab session (capped); nothing goes to an analytics service. */
 export const EVENT_CATALOGUE: { name: string; when: string; props: string[] }[] = [
   { name: 'household_selected', when: 'Family member picks a scenario', props: ['household_id', 'relationship', 'goal'] },
   { name: 'copy_variant_exposed', when: 'Start or invite copy rendered', props: ['variant', 'surface'] },

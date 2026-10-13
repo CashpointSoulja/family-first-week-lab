@@ -5,15 +5,19 @@ import '@fontsource/epilogue/700.css';
 import '@fontsource/oooh-baby/400.css';
 import './styles.css';
 import { CATEGORIES, GOALS, HOUSEHOLDS, RELATIONSHIPS, SCENARIOS, SENSORS } from './engine/fixtures';
-import { accept, ConsentError, decline, revoke, sendInvite, share, canSeeData } from './engine/consent';
-import { firstInsight, fmtAge, type CategoryState } from './engine/insight';
-import { weeklySummary, FREQUENCIES } from './engine/weekly';
-import { EVENT_CATALOGUE, ageBucket } from './engine/events';
+import { fmtAge, type CategoryState } from './engine/insight';
+import { FREQUENCIES } from './engine/weekly';
+import { EVENT_CATALOGUE } from './engine/events';
 import { COPY, HYPOTHESES, SYNTHETIC_FUNNEL } from './engine/lab';
-import type { CategoryId, CopyVariant, Frequency, ScenarioId, SensorId, SensorStatus } from './engine/types';
-import { freshState, household as householdOf, readiness, requiredSensors, ROUTES, scenario as scenarioOf, track, type AppState, type Route } from './store';
+import type { CategoryId, CopyVariant, SensorId, SensorStatus } from './engine/types';
+import type { CommandType } from './server/commands';
+import type { Derived } from './server/model';
+import { household as householdOf, placeholderDerived, placeholderState, ROUTES, scenario as scenarioOf, type AppState, type Route } from './store';
+import { ApiError, loadState, postCommand, type Snapshot } from './api';
 
-let S: AppState = freshState();
+let S: AppState = placeholderState();
+let D: Derived = placeholderDerived();
+let server: 'loading' | 'ok' | 'down' = 'loading';
 let firstLoad = true;
 const app = document.getElementById('app')!;
 const household = () => householdOf(S);
@@ -49,18 +53,9 @@ function onRoute() {
   const r = (location.hash.replace(/^#\//, '') || 'start') as Route;
   S.route = ROUTES.some((x) => x.id === r) ? r : 'start';
   S.notice = null;
-  S.error = null;
-  if (S.route === 'today' && canSeeData(S.consent)) {
-    const ins = firstInsight(scenario(S), S.consent, S.sensors);
-    const fresh = Math.min(...ins.readings.filter((x) => x.state !== 'notShared').map((x) => x.lastEventMins ?? Infinity));
-    track(S, 'first_insight_viewed', { status: ins.status, coverage_pct: ins.coverage.pct, data_age_bucket: ageBucket(Number.isFinite(fresh) ? fresh : null) });
-  }
-  if (S.route === 'week' && canSeeData(S.consent)) {
-    const w = weeklySummary(scenario(S), S.consent, S.sensors);
-    track(S, 'weekly_summary_viewed', { state: w.state, covered_areas: w.coverageDays.covered, shared_areas: w.coverageDays.total });
-  }
-  if (S.route === 'start' || S.route === 'consent') track(S, 'copy_variant_exposed', { surface: S.route });
+  if (server === 'ok') S.error = null;
   render(true);
+  if (server === 'ok' && (S.route === 'start' || S.route === 'consent' || S.route === 'today' || S.route === 'week')) void run('viewed', { surface: S.route }, { silent: true });
 }
 
 /* ---------- views ---------- */
@@ -105,7 +100,7 @@ function startView() {
         <li>The people, homes and every sensor event are made up. No real household or Lilli account is involved.</li>
         <li>Sensors mirror the kit on Lilli's public page: kettle plug, fridge door, front door, bedroom and hallway motion, bathroom sensor and hub.</li>
         <li>Current scenario: <strong>${esc(sc.label)}</strong>. ${esc(sc.summary)} Change it below or in the Lab.</li>
-        <li>Nothing leaves your browser. Events in the Lab are an in-memory preview.</li>
+        <li>Your choices are saved in a private lab session on the server, keyed to a random cookie, so a reload keeps them. Nothing goes to Lilli or any analytics service.</li>
       </ul>
       <label class="field">Simulated week
         <select id="scenario" name="scenario">${scenarioOptions()}</select>
@@ -114,6 +109,8 @@ function startView() {
     <button class="btn btn-primary" type="submit">Continue to consent <span aria-hidden="true">⟶</span></button>
   </form>`;
 }
+
+const demoRoleNote = `<p class="muted small" id="demo-role-note"><strong>Demo role switch, not sign-in.</strong> Anyone using this prototype can switch roles, so it does not prove who gave consent. The server enforces which role may make each choice; real consent would need the invited person's own verified account.</p>`;
 
 const scenarioOptions = () => Object.values(SCENARIOS).map((x) => `<option value="${x.id}" ${x.id === S.scenarioId ? 'selected' : ''}>${esc(x.label)}</option>`).join('');
 
@@ -143,7 +140,8 @@ function consentFamilyView() {
         <h2>Waiting for ${esc(hh.person)}</h2>
         <p>Nothing is collected or shown until ${esc(hh.person)} says yes. You can't answer on their behalf.</p>
       </div>
-      <button class="btn btn-outline" id="as-monitored">Open the invitation as ${esc(hh.person)} (simulated) <span aria-hidden="true">⟶</span></button>`;
+      <button class="btn btn-outline" id="as-monitored">Open the invitation as ${esc(hh.person)} (simulated) <span aria-hidden="true">⟶</span></button>
+      ${demoRoleNote}`;
   } else if (c.status === 'accepted') {
     body = `
       <div class="card band-ok" role="status">
@@ -228,8 +226,8 @@ function consentMonitoredView() {
 function setupView() {
   const hh = household();
   const accepted = S.consent.status === 'accepted';
-  const req = requiredSensors(S);
-  const r = readiness(S);
+  const req = D.requiredSensors;
+  const r = D.readiness;
   return `
   <p class="eyebrow">Step 3 of 5 · Setup</p>
   <h1 tabindex="-1">Set up the <span class="script">sensors</span></h1>
@@ -266,7 +264,7 @@ function personCircle(status: string) {
 }
 
 function todayView() {
-  const ins = firstInsight(scenario(S), S.consent, S.sensors);
+  const ins = D.insight;
   const tone = ins.status === 'ready' ? 'ok' : ins.status === 'noConsent' || ins.status === 'revoked' ? 'bad' : 'warn';
   const locked = ins.status === 'noConsent' || ins.status === 'revoked';
   return `
@@ -297,7 +295,7 @@ function todayView() {
       <button class="btn btn-small btn-outline" data-feedback="clear" aria-pressed="${S.feedback === 'clear'}">Yes, clear</button>
       <button class="btn btn-small btn-outline" data-feedback="unclear" aria-pressed="${S.feedback === 'unclear'}">Not really</button>
     </div>
-    ${S.feedback ? `<p role="status" class="small">Thanks. Recorded as an in-memory event only.</p>` : ''}
+    ${S.feedback ? `<p role="status" class="small">Thanks. Recorded as a synthetic event in this lab session only.</p>` : ''}
   </fieldset>
   <button class="btn btn-primary" id="to-week">See the weekly summary <span aria-hidden="true">⟶</span></button>`}`;
 }
@@ -318,7 +316,7 @@ function bars(series: (number | null)[], label: string) {
 }
 
 function weekView() {
-  const w = weeklySummary(scenario(S), S.consent, S.sensors);
+  const w = D.weekly;
   const tone = w.state === 'stable' ? 'ok' : w.state === 'locked' ? 'bad' : 'warn';
   const stateText = ({ locked: 'No consent', forming: 'Baseline forming', stable: 'Stable pattern', changed: 'Changed pattern', insufficient: 'Insufficient coverage' } as const)[w.state];
   return `
@@ -346,6 +344,7 @@ function weekView() {
     </div>
     <div aria-live="polite">${S.checkIns.length ? `<p class="small" role="status">Noted: ${esc(S.checkIns.at(-1)!)}. Nothing was actually sent; this is a prototype.</p>` : ''}</div>
   </fieldset>
+  <p class="small"><a href="/api/export" id="export-link">Export what you can currently see</a> <span class="muted">(synthetic JSON, built from current consent only)</span></p>
   <fieldset class="card" id="freq">
     <legend>How often should we tell you?</legend>
     ${FREQUENCIES.map((f) => `
@@ -383,7 +382,7 @@ function labView() {
   </section>
   <section class="card">
     <h2>Event instrumentation preview</h2>
-    <p class="small muted">Events this session (newest first). Kept in memory; nothing is sent. No names, contact details or raw sensor events are allowed as properties.</p>
+    <p class="small muted">Events this session (newest first). Stored in this visitor's private lab session (newest 200 kept); nothing goes to an analytics service. No names, contact details or raw sensor events are allowed as properties.</p>
     <div class="table-wrap" tabindex="0" role="region" aria-label="Session events"><table>
       <thead><tr><th scope="col">#</th><th scope="col">Event</th><th scope="col">Properties</th></tr></thead>
       <tbody>${S.events.slice().reverse().slice(0, 25).map((e) => `<tr><td>${e.props.seq}</td><td><code>${esc(e.name)}</code></td><td><code>${esc(JSON.stringify(e.props))}</code></td></tr>`).join('') || '<tr><td colspan="3">No events yet</td></tr>'}</tbody>
@@ -406,14 +405,15 @@ function rail() {
     </div>
     <div class="card">
       <h2 class="h3">Right now</h2>
-      <dl class="facts">
+      ${server !== 'ok' ? `<p class="muted" data-testid="rail-unloaded">Not loaded yet. Nothing is shown until the lab server answers.</p>` : `<dl class="facts">
         <div><dt>Household</dt><dd>${esc(hh.label)}</dd></div>
         <div><dt>You</dt><dd>${esc(relOf().label)}</dd></div>
         <div><dt>Goal</dt><dd>${esc(goalOf().label)}</dd></div>
         <div><dt>Consent</dt><dd data-testid="rail-consent">${esc(S.consent.status)}${S.consent.status === 'accepted' ? ` (${S.consent.shared.length} areas)` : ''}</dd></div>
         <div><dt>Scenario</dt><dd>${esc(sc.label)}</dd></div>
         <div><dt>Copy</dt><dd>${esc(COPY[S.variant].label)}</dd></div>
-      </dl>
+        <div><dt>Saved</dt><dd data-testid="rail-revision">Server revision ${S.revision}</dd></div>
+      </dl>`}
     </div>
     <div class="card band-sky small">
       <p><strong>Simulated:</strong> people, homes, sensor events, clock and funnel. <strong>Real:</strong> the sensor types (from Lilli's public family page) and the logo and colours (from Lilli's public site).</p>
@@ -425,7 +425,7 @@ function rail() {
 function render(routeChanged = false) {
   const active = document.activeElement as HTMLElement | null;
   const activeKey = active?.id || (active?.dataset && Object.entries(active.dataset).map(([k, v]) => `[data-${k}="${v}"]`)[0]) || (active instanceof HTMLInputElement ? `input[name="${active.name}"][value="${active.value}"]` : null);
-  const view = { start: startView, consent: S.view === 'monitored' ? consentMonitoredView : consentFamilyView, setup: setupView, today: todayView, week: weekView, lab: labView }[S.route]();
+  const view = server !== 'ok' ? serverView() : { start: startView, consent: S.view === 'monitored' ? consentMonitoredView : consentFamilyView, setup: setupView, today: todayView, week: weekView, lab: labView }[S.route]();
   app.innerHTML = `
   <a class="skip" href="#main">Skip to content</a>
   <header class="top">
@@ -435,6 +435,7 @@ function render(routeChanged = false) {
   <div class="layout">
     <main id="main" class="phone ${S.view === 'monitored' ? 'is-monitored' : ''}" data-route="${S.route}">
       ${S.notice ? `<p class="notice" role="status">${esc(S.notice)}</p>` : ''}
+      ${S.error && server === 'ok' && !(S.route === 'consent' && S.view === 'monitored') ? `<p class="error" role="alert" id="api-error">${esc(S.error)}</p>` : ''}
       ${view}
     </main>
     ${rail()}
@@ -446,7 +447,9 @@ function render(routeChanged = false) {
     <p><strong>Independent concept by Ayo Ahmed</strong></p>
     <p>Not affiliated with, endorsed by or built for Intelligent Lilli. The Lilli name and logo belong to their owner and are used here only to illustrate a product idea. All people, homes, sensor data and numbers are synthetic. Not a medical or safety service. <a href="/brand-guide.html">Brand guide</a></p>
   </footer>`;
-  if (routeChanged && !firstLoad) {
+  if (active?.tagName === 'H1' && !routeChanged) {
+    (app.querySelector('h1') as HTMLElement | null)?.focus();
+  } else if (routeChanged && !firstLoad) {
     (app.querySelector('h1') as HTMLElement | null)?.focus();
     window.scrollTo(0, 0);
   } else if (activeKey) {
@@ -456,60 +459,76 @@ function render(routeChanged = false) {
   }
 }
 
-/* ---------- actions ---------- */
+/* ---------- server-backed actions ---------- */
 
-function setScenario(id: ScenarioId) {
-  S.scenarioId = id;
-  S.sensors = { ...SCENARIOS[id].sensors };
+function serverView() {
+  if (server === 'loading') return `<p class="eyebrow">Loading</p><h1 tabindex="-1">Opening your <span class="script">lab</span></h1><p role="status">Loading your saved synthetic session from the server.</p>`;
+  return `
+  <p class="eyebrow">Lab server unavailable</p>
+  <h1 tabindex="-1">Nothing to <span class="script">show</span></h1>
+  <div class="card band-bad" role="alert"><h2>The lab server could not load your session</h2><p>${esc(S.error ?? 'Try again shortly.')}</p><p>Rather than show stale or made-up readings, the prototype shows nothing until the server answers.</p></div>
+  <button class="btn btn-outline" id="retry-load">Try again</button>`;
 }
 
-function act(fn: () => void, focusTop = false) {
-  try {
-    S.error = null;
-    fn();
-  } catch (e) {
-    if (e instanceof ConsentError) S.error = e.message;
-    else throw e;
-  }
-  render(focusTop);
+function adopt(snap: Snapshot) {
+  S = { ...snap.state, revision: snap.revision, route: S.route, draftShare: S.draftShare, notice: S.notice, error: S.error };
+  D = snap.derived;
 }
+
+let chain: Promise<unknown> = Promise.resolve();
+
+interface RunOpts { focusTop?: boolean; silent?: boolean; notice?: (s: AppState) => string | null }
+
+/** Commands run one at a time so each carries the latest revision the server gave us. */
+function run(type: CommandType, payload: Record<string, unknown> = {}, opts: RunOpts = {}): Promise<boolean> {
+  const p = chain.then(async () => {
+    let ok = false;
+    try {
+      const snap = await postCommand(type, payload, S.revision);
+      S.error = null;
+      adopt(snap);
+      if (opts.notice) S.notice = opts.notice(S);
+      ok = true;
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.snapshot) adopt(e.snapshot);
+        S.notice = null;
+        S.error = e.code === 'stale_revision'
+          ? 'This lab changed in another tab or window, so I loaded the latest saved state. Your last action was not applied; check and try again.'
+          : e.message;
+      } else {
+        S.error = 'Could not reach the lab server. Nothing was changed.';
+      }
+    }
+    if (!(opts.silent && ok)) render(ok ? opts.focusTop : false);
+    return ok;
+  });
+  chain = p.catch(() => false);
+  return p;
+}
+
+const person = () => household().person;
 
 app.addEventListener('change', (ev) => {
   const t = ev.target as HTMLInputElement;
-  if (t.name === 'household') act(() => {
-    const hh = HOUSEHOLDS.find((h) => h.id === t.value)!;
-    const fresh = freshState();
-    S = { ...fresh, route: S.route, variant: S.variant, events: S.events, clock: S.clock, householdId: hh.id, relationship: hh.defaultRelationship, goal: hh.defaultGoal };
-    setScenario(hh.defaultScenario);
-  });
-  else if (t.name === 'relationship') act(() => { S.relationship = t.value; });
-  else if (t.name === 'goal') act(() => { S.goal = t.value; });
-  else if (t.id === 'scenario' || t.id === 'scenario-lab') act(() => setScenario(t.value as ScenarioId));
+  if (server !== 'ok') return;
+  if (t.name === 'household') { S.draftShare = []; void run('selectHousehold', { householdId: t.value }); }
+  else if (t.name === 'relationship') void run('setRelationship', { relationship: t.value });
+  else if (t.name === 'goal') void run('setGoal', { goal: t.value });
+  else if (t.id === 'scenario' || t.id === 'scenario-lab') void run('setScenario', { scenarioId: t.value });
   else if (t.name === 'share') {
     const v = t.value as CategoryId;
     S.draftShare = t.checked ? [...S.draftShare, v] : S.draftShare.filter((x) => x !== v);
-  } else if (t.name === 'frequency') act(() => {
-    const prev = S.frequency;
-    S.frequency = t.value as Frequency;
-    track(S, 'notification_frequency_set', { frequency: S.frequency, previous: prev });
-  });
-  else if (t.name === 'variant') act(() => { S.variant = t.value as CopyVariant; });
+  } else if (t.name === 'frequency') void run('setFrequency', { frequency: t.value });
+  else if (t.name === 'variant') void run('setVariant', { variant: t.value });
 });
 
 app.addEventListener('submit', (ev) => {
   ev.preventDefault();
   const f = ev.target as HTMLFormElement;
-  if (f.id === 'start-form') {
-    track(S, 'household_selected', { relationship: S.relationship, goal: S.goal });
-    go('consent');
-  } else if (f.id === 'consent-form') {
-    act(() => {
-      S.consent = accept(S.consent, 'monitored', S.draftShare, S.clock);
-      track(S, 'consent_accepted', { categories_count: S.consent.shared.length, categories: S.consent.shared.join('|') });
-      S.view = 'family';
-      S.notice = `${household().person} accepted (simulated).`;
-    }, true);
-  }
+  if (server !== 'ok') return;
+  if (f.id === 'start-form') void run('confirmStart', {}, { silent: true }).then((ok) => ok && go('consent'));
+  else if (f.id === 'consent-form') void run('accept', { categories: S.draftShare }, { focusTop: true, notice: () => `${person()} accepted (simulated).` });
 });
 
 app.addEventListener('click', (ev) => {
@@ -517,59 +536,49 @@ app.addEventListener('click', (ev) => {
   if (!b || b.disabled) return;
   const d = b.dataset;
   const id = b.id;
-  if (id === 'send-invite') act(() => {
-    S.consent = sendInvite(S.consent, 'family', S.clock);
-    S.inviteAttempts += 1;
-    S.draftShare = [];
-    track(S, 'invite_sent', { invite_attempt: S.inviteAttempts });
-  }, true);
-  else if (id === 'as-monitored') act(() => {
-    S.view = 'monitored';
-    if (S.consent.status === 'pending') track(S, 'consent_viewed');
-  }, true);
-  else if (id === 'as-family' || id === 'later') act(() => { S.view = 'family'; }, true);
-  else if (id === 'decline') act(() => {
-    S.consent = decline(S.consent, 'monitored', S.clock);
-    track(S, 'consent_declined', { invite_attempt: S.inviteAttempts });
-    S.view = 'family';
-    S.notice = `${household().person} declined (simulated).`;
-  }, true);
-  else if (d.revoke) act(() => {
-    S.consent = revoke(S.consent, 'monitored', d.revoke as CategoryId, S.clock);
-    track(S, 'sharing_revoked', { scope: 'category', categories_remaining: S.consent.shared.length, days_since_accept: scenario(S).daysElapsed });
-    if (S.consent.status === 'revoked') { S.view = 'family'; S.notice = 'All sharing is off (simulated).'; }
-  }, S.consent.shared.length <= 1);
-  else if (d.share) act(() => { S.consent = share(S.consent, 'monitored', d.share as CategoryId, S.clock); });
-  else if (id === 'revoke-all') act(() => {
-    S.consent = revoke(S.consent, 'monitored', undefined, S.clock);
-    track(S, 'sharing_revoked', { scope: 'all', categories_remaining: 0, days_since_accept: scenario(S).daysElapsed });
-    S.view = 'family';
-    S.notice = 'All sharing is off (simulated).';
-  }, true);
+  if (id === 'retry-load') { void boot(); return; }
+  if (server !== 'ok') return;
+  if (id === 'send-invite') { S.draftShare = []; void run('sendInvite', {}, { focusTop: true }); }
+  else if (id === 'as-monitored') void run('switchActor', { actor: 'monitored' }, { focusTop: true });
+  else if (id === 'as-family' || id === 'later') void run('switchActor', { actor: 'family' }, { focusTop: true });
+  else if (id === 'decline') void run('decline', {}, { focusTop: true, notice: () => `${person()} declined (simulated).` });
+  else if (d.revoke) void run('revoke', { category: d.revoke }, { focusTop: S.consent.shared.length <= 1, notice: (s) => (s.consent.status === 'revoked' ? 'All sharing is off (simulated).' : null) });
+  else if (d.share) void run('share', { category: d.share });
+  else if (id === 'revoke-all') void run('revoke', {}, { focusTop: true, notice: () => 'All sharing is off (simulated).' });
   else if (id === 'to-setup') go('setup');
   else if (id === 'to-today') go('today');
   else if (id === 'to-week') go('week');
-  else if (d.pair || d.test) act(() => {
-    const sid = (d.pair || d.test) as SensorId;
-    const from = S.sensors[sid];
-    S.sensors[sid] = d.pair ? 'waiting' : 'ready';
-    track(S, 'sensor_status_changed', { sensor: sid, from, to: S.sensors[sid] });
-    if (readiness(S).complete) track(S, 'setup_ready', { ready_count: readiness(S).ready, shared_count: readiness(S).total, minutes_from_accept: 0 });
-  });
-  else if (d.feedback) act(() => {
-    S.feedback = d.feedback!;
-    track(S, 'insight_feedback', { answer: d.feedback!, status: firstInsight(scenario(S), S.consent, S.sensors).status });
-  });
-  else if (d.checkin) act(() => {
-    S.checkIns.push(d.checkin!);
-    track(S, 'check_in_started', { channel: d.checkin!.toLowerCase().replace(/\s+/g, '_'), weekly_state: weeklySummary(scenario(S), S.consent, S.sensors).state });
-  });
-  else if (id === 'reset') { S = freshState(); go('start'); onRoute(); }
+  else if (d.pair) void run('pairSensor', { sensor: d.pair as SensorId });
+  else if (d.test) void run('testSensor', { sensor: d.test as SensorId });
+  else if (d.feedback) void run('feedback', { answer: d.feedback });
+  else if (d.checkin) void run('checkIn', { channel: d.checkin });
+  else if (id === 'reset') {
+    S.draftShare = [];
+    void run('reset', {}, { silent: true }).then((ok) => {
+      if (!ok) return;
+      if (location.hash === '#/start' || location.hash === '') onRoute();
+      else go('start');
+    });
+  }
 });
 
-window.addEventListener('hashchange', onRoute);
-onRoute();
-firstLoad = false;
+async function boot() {
+  server = 'loading';
+  try {
+    adopt(await loadState());
+    S.error = null;
+    server = 'ok';
+  } catch (e) {
+    server = 'down';
+    S.error = e instanceof ApiError ? e.message : 'Could not reach the lab server.';
+  }
+  onRoute();
+  firstLoad = false;
+  document.body.dataset.lab = server;
+}
 
-// Exposed for automated checks only; reads state, cannot change consent.
-(window as unknown as { __lab: () => unknown }).__lab = () => JSON.parse(JSON.stringify({ route: S.route, consent: S.consent, scenario: S.scenarioId, events: S.events.map((e) => e.name), fmt: fmtAge(5) }));
+window.addEventListener('hashchange', onRoute);
+void boot();
+
+// Exposed for automated checks only; reads the last server snapshot, cannot change anything.
+(window as unknown as { __lab: () => unknown }).__lab = () => JSON.parse(JSON.stringify({ route: S.route, revision: S.revision, consent: S.consent, scenario: S.scenarioId, events: S.events.map((e) => e.name), fmt: fmtAge(5) }));

@@ -3,8 +3,12 @@ import AxeBuilder from '@axe-core/playwright';
 
 const ALL = ['drinks', 'meals', 'outside', 'wake', 'night', 'bathroom'];
 
+async function open(page: Page, path: string) {
+  await page.goto(path);
+  await page.waitForSelector('body[data-lab="ok"]');
+}
 async function invite(page: Page) {
-  await page.goto('/#/start');
+  await open(page, '/#/start');
   await page.getByRole('button', { name: /Continue to consent/ }).click();
   await page.locator('#send-invite').click();
 }
@@ -14,7 +18,7 @@ async function acceptAs(page: Page, cats = ALL) {
   await page.getByRole('button', { name: "Share what I've chosen" }).click();
 }
 async function pickScenario(page: Page, id: string) {
-  await page.goto('/#/lab');
+  await open(page, '/#/lab');
   await page.selectOption('#scenario-lab', id);
 }
 async function axe(page: Page) {
@@ -23,7 +27,7 @@ async function axe(page: Page) {
 }
 
 test('1 start: fictional household, relationship, goal, simulated-data explainer', async ({ page }) => {
-  await page.goto('/');
+  await open(page, '/');
   await expect(page.locator('main').getByText('Fern Cottage (fictional)')).toBeVisible();
   await expect(page.getByText("What's simulated here")).toBeVisible();
   await page.check('input[value=hh-harbour]');
@@ -38,15 +42,15 @@ test('1 start: fictional household, relationship, goal, simulated-data explainer
 test('2 consent: pending blocks data; no bypass via direct routes', async ({ page }) => {
   await invite(page);
   await expect(page.getByText('Pending: waiting for their answer')).toBeVisible();
-  await page.goto('/#/today');
+  await open(page, '/#/today');
   await expect(page.getByRole('heading', { name: 'Waiting for consent' })).toBeVisible();
   await expect(page.locator('.reading')).toHaveCount(0);
-  await page.goto('/#/week');
+  await open(page, '/#/week');
   await expect(page.locator('[data-weekly=locked]')).toBeVisible();
-  await page.goto('/#/setup');
+  await open(page, '/#/setup');
   await expect(page.getByText(/Paused until Grace says yes/)).toBeVisible();
   await expect(page.locator('#to-today')).toBeDisabled();
-  await page.goto('/#/consent');
+  await open(page, '/#/consent');
   await axe(page);
 });
 
@@ -61,7 +65,7 @@ test('2 consent: accept needs a choice, granular sharing respected', async ({ pa
   await page.check('input[value=meals]');
   await page.getByRole('button', { name: "Share what I've chosen" }).click();
   await expect(page.getByRole('heading', { name: /said yes to 2 of 6/ })).toBeVisible();
-  await page.goto('/#/today');
+  await open(page, '/#/today');
   await expect(page.locator('.reading[data-state=notShared]')).toHaveCount(4);
 });
 
@@ -70,9 +74,9 @@ test('2 consent: decline shares nothing; ask again returns to pending', async ({
   await page.locator('#as-monitored').click();
   await page.locator('#decline').click();
   await expect(page.getByRole('heading', { name: 'Grace said no' })).toBeVisible();
-  await page.goto('/#/today');
+  await open(page, '/#/today');
   await expect(page.getByRole('heading', { name: 'Waiting for consent' })).toBeVisible();
-  await page.goto('/#/consent');
+  await open(page, '/#/consent');
   await axe(page);
   await page.getByRole('button', { name: /Ask again/ }).click();
   await expect(page.getByText('Pending: waiting for their answer')).toBeVisible();
@@ -84,16 +88,16 @@ test('2 consent: revoke one area then everything; insights disappear', async ({ 
   await page.locator('#as-monitored').click();
   await page.getByRole('button', { name: 'Stop sharing bathroom visits' }).click();
   await page.locator('#as-family').click();
-  await page.goto('/#/today');
+  await open(page, '/#/today');
   await expect(page.locator('.reading[data-cat=bathroom]')).toHaveAttribute('data-state', 'notShared');
-  await page.goto('/#/consent');
+  await open(page, '/#/consent');
   await page.locator('#as-monitored').click();
   await page.locator('#revoke-all').click();
   await expect(page.getByRole('heading', { name: 'Grace turned sharing off' })).toBeVisible();
-  await page.goto('/#/today');
+  await open(page, '/#/today');
   await expect(page.getByRole('heading', { name: 'Sharing has been turned off' })).toBeVisible();
   await expect(page.locator('.reading')).toHaveCount(0);
-  await page.goto('/#/week');
+  await open(page, '/#/week');
   await expect(page.locator('[data-weekly=locked]')).toBeVisible();
 });
 
@@ -124,7 +128,7 @@ for (const [id, status, heading] of [
     await pickScenario(page, id);
     await invite(page);
     await acceptAs(page);
-    await page.goto('/#/today');
+    await open(page, '/#/today');
     await expect(page.locator(`[data-status=${status}]`)).toBeVisible();
     await expect(page.getByRole('heading', { name: heading })).toBeVisible();
     if (id !== 'day0') await expect(page.getByRole('heading', { name: 'How sure is this?' })).toBeVisible();
@@ -146,7 +150,7 @@ for (const [id, state] of [['stable', 'stable'], ['changed', 'changed'], ['gaps'
     await pickScenario(page, id);
     await invite(page);
     await acceptAs(page);
-    await page.goto('/#/week');
+    await open(page, '/#/week');
     await expect(page.locator(`[data-weekly=${state}]`)).toBeVisible();
     if (state === 'changed') await expect(page.locator('.trend[data-dir=less]')).not.toHaveCount(0);
     if (state === 'insufficient') await expect(page.locator('.trend[data-dir=unknown]')).not.toHaveCount(0);
@@ -160,7 +164,7 @@ for (const [id, state] of [['stable', 'stable'], ['changed', 'changed'], ['gaps'
 
 test('6 lab: synthetic labels, copy variant changes start screen, events recorded', async ({ page }) => {
   await invite(page);
-  await page.goto('/#/lab');
+  await open(page, '/#/lab');
   await expect(page.getByText('Every number on this page is synthetic.')).toBeVisible();
   const counts = await page.locator('.funnel li').count();
   expect(await page.locator('.funnel .synth').count()).toBeGreaterThanOrEqual(counts);
@@ -168,12 +172,12 @@ test('6 lab: synthetic labels, copy variant changes start screen, events recorde
   await expect(page.locator('table')).toContainText('"synthetic":true');
   await axe(page);
   await page.check('input[value=setupFirst]');
-  await page.goto('/#/start');
+  await open(page, '/#/start');
   await expect(page.locator('h1')).toContainText('your kit');
 });
 
 test('keyboard: complete invite and consent with keyboard only', async ({ page }) => {
-  await page.goto('/#/start');
+  await open(page, '/#/start');
   const submit = page.getByRole('button', { name: /Continue to consent/ });
   await submit.focus();
   await page.keyboard.press('Enter');
@@ -193,7 +197,7 @@ test('keyboard: complete invite and consent with keyboard only', async ({ page }
 });
 
 test('keyboard: skip link and visible focus ring', async ({ page }) => {
-  await page.goto('/#/start');
+  await open(page, '/#/start');
   await page.keyboard.press('Tab');
   const skip = page.getByRole('link', { name: 'Skip to content' });
   await expect(skip).toBeFocused();
@@ -207,7 +211,7 @@ test('responsive: no horizontal overflow on any screen', async ({ page }) => {
   await invite(page);
   await acceptAs(page);
   for (const r of ['start', 'consent', 'setup', 'today', 'week', 'lab']) {
-    await page.goto(`/#/${r}`);
+    await open(page, `/#/${r}`);
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(over, r).toBeLessThanOrEqual(0);
   }
@@ -218,4 +222,73 @@ test('responsive: no horizontal overflow on any screen', async ({ page }) => {
 test('brand guide page passes axe', async ({ page }) => {
   await page.goto('/brand-guide.html');
   await axe(page);
+});
+
+const lab = (page: Page) => page.evaluate(() => (window as unknown as { __lab: () => any }).__lab());
+const ready = (page: Page) => page.waitForSelector('body[data-lab="ok"]');
+
+test('backend: reload keeps the saved synthetic state', async ({ page }) => {
+  await invite(page);
+  await expect(page.locator('#demo-role-note')).toContainText('Demo role switch, not sign-in');
+  await acceptAs(page, ['drinks', 'meals']);
+  await pickScenario(page, 'changed');
+  await expect.poll(async () => (await lab(page)).scenario).toBe('changed');
+  await page.reload();
+  await ready(page);
+  const s = await lab(page);
+  expect(s.consent).toMatchObject({ status: 'accepted', shared: ['drinks', 'meals'] });
+  expect(s.scenario).toBe('changed');
+  await expect(page.getByTestId('rail-revision')).toContainText(`Server revision ${s.revision}`);
+});
+
+test('backend: a second tab revoking consent is not overwritten by a stale first tab', async ({ page, context }) => {
+  await invite(page);
+  await acceptAs(page);
+  const other = await context.newPage();
+  await open(other, '/#/consent');
+  await other.locator('#as-monitored').click();
+  await other.locator('#revoke-all').click();
+  await expect(other.getByText('All sharing is off (simulated).')).toBeVisible();
+  await page.locator('#as-monitored').click();
+  await expect(page.locator('#api-error')).toContainText('changed in another tab');
+  expect((await lab(page)).consent.status).toBe('revoked');
+  await open(page, '/#/today');
+  await expect(page.locator('main')).toContainText('Sharing has been turned off');
+});
+
+test('backend: export follows current consent after a category revoke', async ({ page }) => {
+  await invite(page);
+  await acceptAs(page);
+  await page.locator('#as-monitored').click();
+  await page.locator('[data-revoke="drinks"]').click();
+  await expect.poll(async () => (await lab(page)).consent.shared.length).toBe(5);
+  const ex = await (await page.request.get('/api/export')).json();
+  expect(ex.synthetic).toBe(true);
+  expect(JSON.stringify(ex)).not.toContain('drinks');
+});
+
+test('backend: a failed write shows an error and changes nothing', async ({ page }) => {
+  await invite(page);
+  await page.route('**/api/command', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'storage_unavailable', message: 'Lab storage is unavailable. Nothing was changed.' }) }));
+  await page.locator('#as-monitored').click();
+  await expect(page.locator('#api-error')).toContainText('Lab storage is unavailable');
+  await page.unroute('**/api/command');
+  await page.reload();
+  await ready(page);
+  expect((await lab(page)).consent.status).toBe('pending');
+  await expect(page.locator('#as-monitored')).toBeVisible();
+});
+
+test('backend: if saved state cannot load, nothing is shown', async ({ page }) => {
+  await page.route('**/api/state', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'storage_unavailable', message: 'Lab storage is unavailable.' }) }));
+  await page.goto('/#/today');
+  await page.waitForSelector('body[data-lab="down"]');
+  await expect(page.locator('h1')).toContainText('Nothing to');
+  await expect(page.locator('main')).not.toContainText('sensors saw');
+  await expect(page.getByTestId('rail-revision')).toHaveCount(0);
+  await axe(page);
+  await page.unroute('**/api/state');
+  await page.locator('#retry-load').click();
+  await ready(page);
+  await expect(page.locator('h1')).not.toContainText('Nothing to');
 });

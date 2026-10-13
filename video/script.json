@@ -1,507 +1,529 @@
 {
- "viewport": {
-  "width": 432,
-  "height": 700,
-  "dpr": 2.5
- },
- "scenes": [
-  {
-   "id": "intro",
-   "actions": [
-    [
-     "goto",
-     "/#/start"
-    ]
-   ],
-   "phrases": [
+  "viewport": {
+    "width": 432,
+    "height": 700,
+    "dpr": 2.5
+  },
+  "scenes": [
     {
-     "say": "This is Family First-Week Lab, an independent concept I made for Lilli's Product Manager role.",
-     "cap": "Family First-Week Lab: an independent\nconcept for Lilli's Product Manager role"
+      "id": "intro",
+      "actions": [
+        [
+          "goto",
+          "/#/start"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "This is Family First-Week Lab, an independent concept I made for Lilli's Product Manager role.",
+          "cap": "Family First-Week Lab: an independent\nconcept for Lilli's Product Manager role"
+        },
+        {
+          "say": "It isn't a Lilli product, and every household and number in it is made up.",
+          "cap": "It isn't a Lilli product, and every\nhousehold and number is made up"
+        },
+        {
+          "say": "Lilli's family product is on a waiting list, so I designed this first week from public information only.",
+          "cap": "Lilli's family product is waitlisted,\nso I worked from public pages only"
+        }
+      ]
     },
     {
-     "say": "It isn't a Lilli product, and every household and number in it is made up.",
-     "cap": "It isn't a Lilli product, and every\nhousehold and number is made up"
+      "id": "household",
+      "actions": [
+        [
+          "scrollTo",
+          "input[value=hh-fern]"
+        ],
+        [
+          "click",
+          "input[value=hh-fern]"
+        ],
+        [
+          "scrollTo",
+          "input[value=fewerCalls]"
+        ],
+        [
+          "click",
+          "input[value=fewerCalls]"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "I'll pick a fictional household: Grace, who is eighty one, and her son Daniel.",
+          "cap": "A fictional household: Grace, 81,\nand her son Daniel"
+        },
+        {
+          "say": "His goal is to feel reassured without calling every day.",
+          "cap": "His goal: feel reassured without\ncalling every day"
+        }
+      ]
     },
     {
-     "say": "Lilli's family product is on a waiting list, so I designed this first week from public information only.",
-     "cap": "Lilli's family product is waitlisted,\nso I worked from public pages only"
-    }
-   ]
-  },
-  {
-   "id": "household",
-   "actions": [
-    [
-     "scrollTo",
-     "input[value=hh-fern]"
-    ],
-    [
-     "click",
-     "input[value=hh-fern]"
-    ],
-    [
-     "scrollTo",
-     "input[value=fewerCalls]"
-    ],
-    [
-     "click",
-     "input[value=fewerCalls]"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "I'll pick a fictional household: Grace, who is eighty one, and her son Daniel.",
-     "cap": "A fictional household: Grace, 81,\nand her son Daniel"
+      "id": "simulated",
+      "actions": [
+        [
+          "scrollTo",
+          "#sim-note"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "This panel explains exactly what is simulated. The sensors match the kit on Lilli's public page.",
+          "cap": "This panel says what is simulated.\nSensors match Lilli's public kit"
+        }
+      ]
     },
     {
-     "say": "His goal is to feel reassured without calling every day.",
-     "cap": "His goal: feel reassured without\ncalling every day"
-    }
-   ]
-  },
-  {
-   "id": "simulated",
-   "actions": [
-    [
-     "scrollTo",
-     "#sim-note"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "This panel explains exactly what is simulated. The sensors match the kit on Lilli's public page.",
-     "cap": "This panel says what is simulated.\nSensors match Lilli's public kit"
-    }
-   ]
-  },
-  {
-   "id": "consent",
-   "actions": [
-    [
-     "click",
-     "#start-form button[type=submit]"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Consent comes first. Daniel sees what Grace will be asked about, one area at a time.",
-     "cap": "Consent comes first: Grace is asked\nabout each area, one at a time"
-    }
-   ]
-  },
-  {
-   "id": "invite",
-   "actions": [
-    [
-     "scrollTo",
-     "#send-invite"
-    ],
-    [
-     "click",
-     "#send-invite"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Once he sends the invitation, it's pending. Nothing is collected, and he can't answer for her.",
-     "cap": "The invitation is pending. Nothing is\ncollected, and he can't answer for her"
-    }
-   ]
-  },
-  {
-   "id": "bypass",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/today']"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "If he jumps ahead to Today, the app shows that it's waiting for consent, with no data.",
-     "cap": "Jumping ahead to Today shows\n\"Waiting for consent\", with no data"
-    }
-   ]
-  },
-  {
-   "id": "asgrace",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/consent']"
-    ],
-    [
-     "click",
-     "#as-monitored"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Now I'm viewing as Grace. Nothing is ticked for her. She chooses what to share.",
-     "cap": "Now viewing as Grace. Nothing is\npre-ticked: she chooses"
-    }
-   ]
-  },
-  {
-   "id": "choose",
-   "actions": [
-    [
-     "click",
-     "input[value=drinks]"
-    ],
-    [
-     "click",
-     "input[value=meals]"
-    ],
-    [
-     "click",
-     "input[value=outside]"
-    ],
-    [
-     "click",
-     "input[value=wake]"
-    ],
-    [
-     "click",
-     "input[value=night]"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Each area comes with a plain description, so she knows exactly what it covers.",
-     "cap": "Each area has a plain description\nof exactly what it covers"
+      "id": "consent",
+      "actions": [
+        [
+          "click",
+          "#start-form button[type=submit]"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Consent comes first. Daniel sees what Grace will be asked about, one area at a time.",
+          "cap": "Consent comes first: Grace is asked\nabout each area, one at a time"
+        }
+      ]
     },
     {
-     "say": "She shares five areas, and keeps her bathroom visits private.",
-     "cap": "She shares five areas and keeps\nbathroom visits private"
-    }
-   ]
-  },
-  {
-   "id": "accepted",
-   "actions": [
-    [
-     "scrollTo",
-     "#consent-form button[type=submit]"
-    ],
-    [
-     "click",
-     "#consent-form button[type=submit]"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Daniel can see which areas she said yes to, and that she can change this at any time.",
-     "cap": "Daniel sees what she said yes to,\nand that she can change it any time"
-    }
-   ]
-  },
-  {
-   "id": "setup",
-   "actions": [
-    [
-     "scrollTo",
-     "#to-setup"
-    ],
-    [
-     "click",
-     "#to-setup"
-    ],
-    [
-     "wait",
-     1200
-    ],
-    [
-     "scrollBy",
-     420
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Setup only counts the hub and the sensors Grace agreed to.",
-     "cap": "Setup counts only the hub and the\nsensors Grace agreed to"
+      "id": "invite",
+      "actions": [
+        [
+          "scrollTo",
+          "#send-invite"
+        ],
+        [
+          "click",
+          "#send-invite"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Once he sends the invitation, it's pending. Nothing is collected, and he can't answer for her.",
+          "cap": "The invitation is pending. Nothing is\ncollected, and he can't answer for her"
+        }
+      ]
     },
     {
-     "say": "A sensor that hasn't reported counts as missing, never as fine.",
-     "cap": "A silent sensor counts as missing,\nnever as fine"
-    }
-   ]
-  },
-  {
-   "id": "today",
-   "actions": [
-    [
-     "scrollTo",
-     "#to-today"
-    ],
-    [
-     "click",
-     "#to-today"
-    ],
-    [
-     "wait",
-     2600
-    ],
-    [
-     "scrollBy",
-     330
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "The first useful insight is about routine, not health.",
-     "cap": "The first useful insight is about\nroutine, not health"
+      "id": "bypass",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/today']"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "If he jumps ahead to Today, the app shows that it's waiting for consent, with no data.",
+          "cap": "Jumping ahead to Today shows\n\"Waiting for consent\", with no data"
+        }
+      ]
     },
     {
-     "say": "The kettle was first used around seven forty, with freshness and coverage alongside.",
-     "cap": "Kettle first used around 7:40, with\nfreshness and coverage alongside"
-    }
-   ]
-  },
-  {
-   "id": "sure",
-   "actions": [
-    [
-     "scrollTo",
-     ".feedback"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "It says how sure it is, and that sensors can't tell who used the kettle, or why.",
-     "cap": "It says how sure it is: sensors can't\ntell who used the kettle, or why"
-    }
-   ]
-  },
-  {
-   "id": "stale",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/lab']"
-    ],
-    [
-     "scrollTo",
-     "#scenario-lab"
-    ],
-    [
-     "select",
-     "#scenario-lab",
-     "stale"
-    ],
-    [
-     "click",
-     ".steps a[href='#/today']"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Now a harder case. I'll switch the simulated week, so the hub went quiet thirty hours ago.",
-     "cap": "A harder case: the hub went quiet\n30 hours ago (simulated)"
+      "id": "asgrace",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/consent']"
+        ],
+        [
+          "click",
+          "#as-monitored"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Now I'm viewing as Grace. Nothing is ticked for her. She chooses what to share.",
+          "cap": "Now viewing as Grace. Nothing is\npre-ticked: she chooses"
+        }
+      ]
     },
     {
-     "say": "Instead of looking calm, the app says it hasn't heard from the hub, and suggests a call or a message.",
-     "cap": "Instead of looking calm, it says so,\nand suggests a call or a message"
-    }
-   ]
-  },
-  {
-   "id": "changed",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/lab']"
-    ],
-    [
-     "scrollTo",
-     "#scenario-lab"
-    ],
-    [
-     "select",
-     "#scenario-lab",
-     "changed"
-    ],
-    [
-     "click",
-     ".steps a[href='#/week']"
-    ],
-    [
-     "wait",
-     2400
-    ],
-    [
-     "scrollBy",
-     260
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Now I'll switch to a different simulated week. Here, the routine looks different.",
-     "cap": "Another simulated week. Here,\nthe routine looks different"
+      "id": "choose",
+      "actions": [
+        [
+          "click",
+          "input[value=drinks]"
+        ],
+        [
+          "click",
+          "input[value=meals]"
+        ],
+        [
+          "click",
+          "input[value=outside]"
+        ],
+        [
+          "click",
+          "input[value=wake]"
+        ],
+        [
+          "click",
+          "input[value=night]"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Each area comes with a plain description, so she knows exactly what it covers.",
+          "cap": "Each area has a plain description\nof exactly what it covers"
+        },
+        {
+          "say": "She shares five areas, and keeps her bathroom visits private.",
+          "cap": "She shares five areas and keeps\nbathroom visits private"
+        }
+      ]
     },
     {
-     "say": "There were fewer front door opens and kettle uses in the last three days.",
-     "cap": "Fewer front-door opens and kettle\nuses in the last three days"
-    }
-   ]
-  },
-  {
-   "id": "checkin",
-   "actions": [
-    [
-     "scrollTo",
-     "[data-checkin='Mark as checked in']"
-    ],
-    [
-     "wait",
-     1500
-    ],
-    [
-     "scrollTo",
-     "#freq"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "It doesn't guess why. It suggests a relaxed check in, and Daniel chooses how often he hears from it.",
-     "cap": "It doesn't guess why. It suggests\na relaxed check-in"
+      "id": "accepted",
+      "actions": [
+        [
+          "scrollTo",
+          "#consent-form button[type=submit]"
+        ],
+        [
+          "click",
+          "#consent-form button[type=submit]"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Daniel can see which areas she said yes to, and that she can change this at any time.",
+          "cap": "Daniel sees what she said yes to,\nand that she can change it any time"
+        }
+      ]
     },
     {
-     "say": "A weekly digest is the default, and there are no instant alerts.",
-     "cap": "Weekly digest by default,\nand no instant alerts"
-    }
-   ]
-  },
-  {
-   "id": "gaps",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/lab']"
-    ],
-    [
-     "scrollTo",
-     "#scenario-lab"
-    ],
-    [
-     "select",
-     "#scenario-lab",
-     "gaps"
-    ],
-    [
-     "click",
-     ".steps a[href='#/week']"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "When coverage is patchy, it calls that a data gap, not a sign that nothing changed.",
-     "cap": "Patchy coverage is a data gap,\nnot a sign that nothing changed"
-    }
-   ]
-  },
-  {
-   "id": "revoke",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/consent']"
-    ],
-    [
-     "click",
-     "#as-monitored"
-    ],
-    [
-     "scrollTo",
-     "#revoke-all"
-    ],
-    [
-     "click",
-     "#revoke-all"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Grace can stop sharing at any time.",
-     "cap": "Grace can stop sharing\nat any time"
+      "id": "saved",
+      "actions": [
+        [
+          "reload"
+        ],
+        [
+          "wait",
+          600
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "If I reload the page, Grace's answer is still there. It's saved on the server, in a private session for this visitor, and the server is what enforces who can change it.",
+          "cap": "Reload: Grace's answer is still there,\nsaved and enforced on the server"
+        },
+        {
+          "say": "The switch between Daniel and Grace is a demo role, not a sign-in, so it doesn't prove who agreed.",
+          "cap": "The role switch is a demo,\nnot a sign-in"
+        }
+      ]
     },
     {
-     "say": "When she does, Daniel's insights disappear, including earlier ones.",
-     "cap": "Then Daniel's insights disappear,\nincluding earlier ones"
-    }
-   ]
-  },
-  {
-   "id": "revoked",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/today']"
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Today now just says that sharing has been turned off.",
-     "cap": "Today now says sharing\nhas been turned off"
-    }
-   ]
-  },
-  {
-   "id": "lab",
-   "actions": [
-    [
-     "click",
-     ".steps a[href='#/lab']"
-    ],
-    [
-     "wait",
-     2500
-    ],
-    [
-     "scrollBy",
-     520
-    ]
-   ],
-   "phrases": [
-    {
-     "say": "Finally, the product lab: three hypotheses, two onboarding copy variants,",
-     "cap": "The product lab: hypotheses and\ntwo onboarding copy variants"
+      "id": "setup",
+      "actions": [
+        [
+          "scrollTo",
+          "#to-setup"
+        ],
+        [
+          "click",
+          "#to-setup"
+        ],
+        [
+          "wait",
+          1200
+        ],
+        [
+          "scrollBy",
+          420
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Setup only counts the hub and the sensors Grace agreed to.",
+          "cap": "Setup counts only the hub and the\nsensors Grace agreed to"
+        },
+        {
+          "say": "A sensor that hasn't reported counts as missing, never as fine.",
+          "cap": "A silent sensor counts as missing,\nnever as fine"
+        }
+      ]
     },
     {
-     "say": "and a live event log with no names or raw sensor data.",
-     "cap": "A live event log, with no names\nor raw sensor data"
-    }
-   ]
-  },
-  {
-   "id": "funnel",
-   "actions": [
-    [
-     "scrollTo",
-     ".funnel"
-    ]
-   ],
-   "phrases": [
+      "id": "today",
+      "actions": [
+        [
+          "scrollTo",
+          "#to-today"
+        ],
+        [
+          "click",
+          "#to-today"
+        ],
+        [
+          "wait",
+          2600
+        ],
+        [
+          "scrollBy",
+          330
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "The first useful insight is about routine, not health.",
+          "cap": "The first useful insight is about\nroutine, not health"
+        },
+        {
+          "say": "The kettle was first used around seven forty, with freshness and coverage alongside.",
+          "cap": "Kettle first used around 7:40, with\nfreshness and coverage alongside"
+        }
+      ]
+    },
     {
-     "say": "The funnel is a synthetic cohort, there to show the denominators. It isn't Lilli data, and it doesn't claim any lift.",
-     "cap": "The funnel is synthetic: not Lilli\ndata, and no lift is claimed"
-    }
-   ]
-  },
-  {
-   "id": "outro",
-   "actions": [
-    [
-     "scrollTo",
-     "footer"
-    ]
-   ],
-   "phrases": [
+      "id": "sure",
+      "actions": [
+        [
+          "scrollTo",
+          ".feedback"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "It says how sure it is, and that sensors can't tell who used the kettle, or why.",
+          "cap": "It says how sure it is: sensors can't\ntell who used the kettle, or why"
+        }
+      ]
+    },
     {
-     "say": "The PRD, metrics, experiments and test results are in the public repo. Independent concept by Ayo Ahmed.",
-     "cap": "PRD, metrics, experiments and tests\nare in the repo. By Ayo Ahmed"
+      "id": "stale",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/lab']"
+        ],
+        [
+          "scrollTo",
+          "#scenario-lab"
+        ],
+        [
+          "select",
+          "#scenario-lab",
+          "stale"
+        ],
+        [
+          "click",
+          ".steps a[href='#/today']"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Now a harder case. I'll switch the simulated week, so the hub went quiet thirty hours ago.",
+          "cap": "A harder case: the hub went quiet\n30 hours ago (simulated)"
+        },
+        {
+          "say": "Instead of looking calm, the app says it hasn't heard from the hub, and suggests a call or a message.",
+          "cap": "Instead of looking calm, it says so,\nand suggests a call or a message"
+        }
+      ]
+    },
+    {
+      "id": "changed",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/lab']"
+        ],
+        [
+          "scrollTo",
+          "#scenario-lab"
+        ],
+        [
+          "select",
+          "#scenario-lab",
+          "changed"
+        ],
+        [
+          "click",
+          ".steps a[href='#/week']"
+        ],
+        [
+          "wait",
+          2400
+        ],
+        [
+          "scrollBy",
+          260
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Now I'll switch to a different simulated week. Here, the routine looks different.",
+          "cap": "Another simulated week. Here,\nthe routine looks different"
+        },
+        {
+          "say": "There were fewer front door opens and kettle uses in the last three days.",
+          "cap": "Fewer front-door opens and kettle\nuses in the last three days"
+        }
+      ]
+    },
+    {
+      "id": "checkin",
+      "actions": [
+        [
+          "scrollTo",
+          "[data-checkin='Mark as checked in']"
+        ],
+        [
+          "wait",
+          1500
+        ],
+        [
+          "scrollTo",
+          "#freq"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "It doesn't guess why. It suggests a relaxed check in, and Daniel chooses how often he hears from it.",
+          "cap": "It doesn't guess why. It suggests\na relaxed check-in"
+        },
+        {
+          "say": "A weekly digest is the default, and there are no instant alerts.",
+          "cap": "Weekly digest by default,\nand no instant alerts"
+        }
+      ]
+    },
+    {
+      "id": "gaps",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/lab']"
+        ],
+        [
+          "scrollTo",
+          "#scenario-lab"
+        ],
+        [
+          "select",
+          "#scenario-lab",
+          "gaps"
+        ],
+        [
+          "click",
+          ".steps a[href='#/week']"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "When coverage is patchy, it calls that a data gap, not a sign that nothing changed.",
+          "cap": "Patchy coverage is a data gap,\nnot a sign that nothing changed"
+        }
+      ]
+    },
+    {
+      "id": "revoke",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/consent']"
+        ],
+        [
+          "click",
+          "#as-monitored"
+        ],
+        [
+          "scrollTo",
+          "#revoke-all"
+        ],
+        [
+          "click",
+          "#revoke-all"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Grace can stop sharing at any time.",
+          "cap": "Grace can stop sharing\nat any time"
+        },
+        {
+          "say": "When she does, Daniel's insights disappear, including earlier ones.",
+          "cap": "Then Daniel's insights disappear,\nincluding earlier ones"
+        }
+      ]
+    },
+    {
+      "id": "revoked",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/today']"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Today now just says that sharing has been turned off.",
+          "cap": "Today now says sharing\nhas been turned off"
+        }
+      ]
+    },
+    {
+      "id": "lab",
+      "actions": [
+        [
+          "click",
+          ".steps a[href='#/lab']"
+        ],
+        [
+          "wait",
+          2500
+        ],
+        [
+          "scrollBy",
+          520
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "Finally, the product lab: three hypotheses, two onboarding copy variants,",
+          "cap": "The product lab: hypotheses and\ntwo onboarding copy variants"
+        },
+        {
+          "say": "and a live event log with no names or raw sensor data.",
+          "cap": "A live event log, with no names\nor raw sensor data"
+        }
+      ]
+    },
+    {
+      "id": "funnel",
+      "actions": [
+        [
+          "scrollTo",
+          ".funnel"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "The funnel is a synthetic cohort, there to show the denominators. It isn't Lilli data, and it doesn't claim any lift.",
+          "cap": "The funnel is synthetic: not Lilli\ndata, and no lift is claimed"
+        }
+      ]
+    },
+    {
+      "id": "outro",
+      "actions": [
+        [
+          "scrollTo",
+          "footer"
+        ]
+      ],
+      "phrases": [
+        {
+          "say": "The PRD, metrics, experiments and test results are in the public repo. Independent concept by Ayo Ahmed.",
+          "cap": "PRD, metrics, experiments and tests\nare in the repo. By Ayo Ahmed"
+        }
+      ]
     }
-   ]
-  }
- ]
+  ]
 }

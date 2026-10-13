@@ -13,6 +13,14 @@
 | Contrast and a11y | axe-core WCAG 2.0/2.1/2.2 A+AA on every screen and state, including the brand guide | e2e |
 | Responsive | No horizontal overflow on any route at 390 and 1366 | e2e |
 | Visual | Screenshots of each screen at 390 and 1366, inspected by eye | `docs/screenshots/` |
+| Backend: identity and isolation | Random HttpOnly SameSite=Strict cookie; visitors never see each other's state; malformed cookies are replaced | `tests/api` |
+| Backend: hostile payloads | Whole-state blobs, caller timestamps or actors, unknown categories, scenarios, sensors and commands, oversize, wrong content type, cross-origin, missing cookie: all refused with state unchanged | `tests/api`, `tests/unit/commands.test.ts` |
+| Backend: consent transitions | Role-restricted accept, decline, share, revoke and invite; invalid transitions are 422 | `tests/api`, `npm run eval` |
+| Backend: revocation | Category and full revoke remove the area from the first insight, coverage, weekly trends and export | `tests/api`, eval C10 and C11, e2e |
+| Backend: replay and concurrency | Same commandId replays without re-applying; different body conflicts; stale revision is 409; 5 concurrent writes on one revision give exactly one winner; a second tab can't overwrite | `tests/api`, e2e |
+| Backend: fail-closed | Injected write and read faults return 503 and roll back; the UI shows an error or "Nothing to show" | `tests/api`, e2e |
+| Backend: reset, reload and bounds | Reload keeps state; reset keeps revisions increasing; caps on events, audit rows and the replay window | `tests/api`, e2e |
+| Eval sensitivity | A deliberately broken consent rule must turn the eval red | `npm run eval:broken` |
 | Build and deploy | `tsc`, `vite build`, `wrangler deploy --dry-run` (no deploy) | npm scripts |
 | Publication | No tool/agent bylines or machine paths in files, the built site or the git log | `npm run audit:publish` |
 

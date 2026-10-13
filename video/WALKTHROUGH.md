@@ -2,6 +2,8 @@
 
 This is the exact click path and narration for a public walkthrough recording. It is generated from [script.json](script.json), the same file `record.mjs` replays, so a manual recording and the scripted one show the same states in the same order.
 
+**Server:** run `npm run dev` (build, then local Worker + Durable Object on http://localhost:8787) and point the recorder at it. Every click is a server command, and the screen shows only what the server returns.
+
 **Start state:** a fresh browser profile (or **Reset the demo** in the Lab) on `/#/start`, Fern Cottage selected and scenario *Steady first week*. Every screen is the real prototype with synthetic data.
 
 **Grounding:** each line describes only what is on screen at that moment. Every factual claim about Lilli comes from its public pages (see [docs/SOURCES.md](../docs/SOURCES.md)): it is waitlisted, the kit is a hub plus six sensors, and there are no cameras or microphones. The script makes no claims about usage, impact or health.
@@ -94,6 +96,16 @@ This is the exact click path and narration for a public walkthrough recording. I
 > Daniel can see which areas she said yes to, and that she can change this at any time.
 >
 > *Caption:* Daniel sees what she said yes to, / and that she can change it any time
+
+## 9a. saved
+- Reload the page (wait for `body[data-lab="ok"]`)
+
+> If I reload the page, Grace's answer is still there. It's saved on the server, in a private session for this visitor, and the server is what enforces who can change it.
+>
+> The switch between Daniel and Grace is a demo role, not a sign-in, so it doesn't prove who agreed.
+>
+> *Caption:* Reload: Grace's answer is still there, / saved and enforced on the server
+> *Caption:* The role switch is a demo, / not a sign-in
 
 ## 10. setup
 - Scroll to `#to-setup`

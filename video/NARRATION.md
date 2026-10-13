@@ -36,3 +36,11 @@ First-person script, spoken by a synthetic British voice generated locally. Time
 | 137.6s | lab | and a live event log with no names or raw sensor data. | A live event log, with no names / or raw sensor data |
 | 141.4s | funnel | The funnel is a synthetic cohort, there to show the denominators. It isn't Lilli data, and it doesn't claim any lift. | The funnel is synthetic: not Lilli / data, and no lift is claimed |
 | 148.5s | outro | The PRD, metrics, experiments and test results are in the public repo. Independent concept by Ayo Ahmed. | PRD, metrics, experiments and tests / are in the repo. By Ayo Ahmed |
+
+## Added for the backend (scene 9a, after "accepted")
+
+> If I reload the page, Grace's answer is still there. It's saved on the server, in a private session for this visitor, and the server is what enforces who can change it.
+>
+> The switch between Daniel and Grace is a demo role, not a sign-in, so it doesn't prove who agreed.
+
+Not rehearsed yet: the rehearsal timings above leave this scene out.

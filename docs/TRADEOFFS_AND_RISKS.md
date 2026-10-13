@@ -22,3 +22,6 @@
 | Data after revocation | Family still sees old insights | Revoking hides earlier insights too (prototype behaviour) | Real retention and deletion policy needed |
 | Analytics leakage | Event properties include identity | Forbidden-property guard; pseudonymous IDs; no raw events | Real pipeline needs DPIA and access controls |
 | Brand confusion | Viewer thinks this is Lilli's product | Badge, footer, README disclaimer, `noindex` | Screenshots can travel without context |
+| Demo role is not identity | Anyone using the prototype can act as the invited person, so a "yes" proves nothing about who agreed | The switch is labelled "Demo role switch, not sign-in" in the UI and docs; the server still enforces which role may make each choice | Production needs the invited person's own verified account, plus legal and safeguarding review |
+| Server-side copy of synthetic choices | Visitor sessions persist in a Durable Object | Random 128-bit cookie, synthetic data only, capped history (200 events, 500 audit rows, 200 replayable commands), reset in the Lab | No deletion schedule yet; a real service needs retention rules |
+
