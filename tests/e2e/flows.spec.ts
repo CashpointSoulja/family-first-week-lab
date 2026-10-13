@@ -123,6 +123,8 @@ test('3 setup: readiness counts only shared sensors; pairing simulated', async (
   await expect(page.getByRole('heading', { name: '5 of 7 needed sensors reporting' })).toBeVisible();
   await expect(page.getByText('Not paired')).toBeVisible();
   await expect(page.getByText('Waiting for first event')).toBeVisible();
+  await expect(page.getByText('Pairing and timings here are simulated, not a claim about Lilli.')).toBeVisible();
+  expect(await page.locator('main').innerText()).not.toMatch(/30 minutes|self-setup/i);
   await axe(page);
   const toPair = await page.locator('[data-sensor-status=notPaired]').getAttribute('data-sensor');
   await page.locator(`[data-pair="${toPair}"]`).click();
@@ -173,6 +175,8 @@ for (const [id, state] of [['stable', 'stable'], ['changed', 'changed'], ['gaps'
     await acceptAs(page);
     await open(page, '/#/week');
     await expect(page.locator(`[data-weekly=${state}]`)).toBeVisible();
+    await expect(page.getByText('No instant alerts in this prototype. This is not an emergency, medical or safety service.')).toBeVisible();
+    expect(await page.locator('main').innerText()).not.toMatch(/detects? falls|Lilli says publicly/i);
     if (state === 'changed') await expect(page.locator('.trend[data-dir=less]')).not.toHaveCount(0);
     if (state === 'insufficient') await expect(page.locator('.trend[data-dir=unknown]')).not.toHaveCount(0);
     await page.check('input[value=daily]');

@@ -235,7 +235,7 @@ function setupView() {
   <div class="card ${r.complete ? 'band-ok' : 'band-sky'}" role="status" aria-live="polite">
     <h2>${accepted ? `${r.ready} of ${r.total} needed sensors reporting` : 'Readiness not started'}</h2>
     <p>${accepted ? (r.complete ? 'Setup is ready. Your first insight arrives after one full day of data.' : 'A sensor that hasn\'t reported is shown as missing. Missing never counts as "all fine".') : 'Readiness counts only the hub and sensors for areas that have been shared.'}</p>
-    <p class="muted small">Lilli's public page quotes an average of 30 minutes for self-setup. Times here are simulated.</p>
+    <p class="muted small">Pairing and timings here are simulated, not a claim about Lilli.</p>
   </div>
   <ol class="card list checklist">
     ${SENSORS.map((x) => {
@@ -349,7 +349,7 @@ function weekView() {
     <legend>How often should we tell you?</legend>
     ${FREQUENCIES.map((f) => `
       <label class="choice"><input type="radio" name="frequency" value="${f.id}" ${S.frequency === f.id ? 'checked' : ''} /><span><strong>${esc(f.label)}</strong><br /><span class="muted small">${esc(f.detail)}</span></span></label>`).join('')}
-    <p class="small muted">No instant alerts. Lilli says publicly that it does not currently detect falls, so a real-time ping could be mistaken for an emergency service. ${esc(household().person)} can see which option you chose.</p>
+    <p class="small muted">No instant alerts in this prototype. This is not an emergency, medical or safety service. ${esc(household().person)} can see which option you chose.</p>
   </fieldset>`}`;
 }
 
