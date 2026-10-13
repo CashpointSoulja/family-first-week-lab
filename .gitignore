@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.wrangler-dryrun/
+test-results/
+playwright-report/
+video/out/
+video/frames/
+*.log
+.DS_Store

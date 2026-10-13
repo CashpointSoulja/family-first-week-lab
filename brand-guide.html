@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Visual brand guide · Family First-Week Lab (independent concept)</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="/brand/lilli-logo.svg" type="image/svg+xml" />
+<script type="module" src="/src/brand.ts"></script>
+<style>
+  .guide { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 4rem; display: flex; flex-direction: column; gap: 1.25rem; }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+  .sw div { border-radius: 16px; border: 1px solid var(--line); overflow: hidden; background: #fff; font-size: 0.85rem; }
+  .sw span { display: block; height: 70px; }
+  .sw p { margin: 0.4rem 0.6rem 0.6rem; }
+  .logo-box { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+  .logo-box img { height: 72px; }
+  .ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .ref img { width: 100%; border-radius: 12px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="/"><img src="/brand/lilli-logo.svg" alt="Lilli logo" width="40" height="31" /><span>Family First-Week Lab</span></a><span class="concept-badge">Independent concept · not Lilli</span></header>
+<main class="guide" id="main">
+  <p class="eyebrow">Visual brand guide</p>
+  <h1>Calm, warm and <span class="script">honest</span></h1>
+  <p class="lead">Sampled from Lilli's public website CSS and published app imagery, for use in an independent concept only. The Lilli name and logo belong to Intelligent Lilli.</p>
+
+  <section class="card"><h2>Logo</h2>
+    <div class="logo-box"><img src="/brand/lilli-logo.svg" alt="Lilli logo, unmodified" /><p>The official SVG from the live site, used unmodified: dark-teal bars <code>#143c46</code> and a coral full stop <code>#f55a5a</code>. Top-left at 28–36 px, with clear space at least the width of the dot. Never recoloured or redrawn. Always shown alongside "Independent concept · not Lilli".</p></div>
+  </section>
+
+  <section class="card"><h2>Colour</h2>
+    <div class="sw">
+      <div><span style="background:#1e303a"></span><p><strong>Ink</strong> #1e303a<br/>text, primary button</p></div>
+      <div><span style="background:#0d3f40"></span><p><strong>App teal</strong> #0d3f40<br/>nav, chart bars</p></div>
+      <div><span style="background:#ff595a"></span><p><strong>Coral</strong> #ff595a<br/>accent only</p></div>
+      <div><span style="background:#feed9d"></span><p><strong>Lemon</strong> #feed9d<br/>hero band</p></div>
+      <div><span style="background:#ffcdcd"></span><p><strong>Blush</strong> #ffcdcd<br/>concept band</p></div>
+      <div><span style="background:#a6dcd5"></span><p><strong>Mint</strong> #a6dcd5<br/>selected, tags</p></div>
+      <div><span style="background:#dff1fd"></span><p><strong>Sky</strong> #dff1fd<br/>info panels</p></div>
+      <div><span style="background:#faf7f2"></span><p><strong>Cream</strong> #faf7f2<br/>page background</p></div>
+      <div><span style="background:#2d62ff"></span><p><strong>Focus</strong> #2d62ff<br/>3 px focus ring</p></div>
+      <div><span style="background:#cef5ca"></span><p><strong>Ready</strong> #cef5ca / #114e0b</p></div>
+      <div><span style="background:#fcf8d8"></span><p><strong>Pending, stale</strong> #fcf8d8 / #5e5515</p></div>
+      <div><span style="background:#f8e4e4"></span><p><strong>Declined, missing</strong> #f8e4e4 / #3b0b0b</p></div>
+    </div>
+    <p class="small muted">Teal #049b92 is decorative only (below 4.5:1 for small text on white). Muted text uses #5d6c75, a darkened version of the site's #828c91, to pass AA.</p>
+  </section>
+
+  <section class="card"><h2>Type</h2>
+    <p style="font-family:var(--serif);font-size:2.2rem;margin:0">DM Serif Display: headlines</p>
+    <p style="font-family:var(--script);font-size:2.2rem;margin:0">Oooh Baby: one accent word</p>
+    <p style="font-size:1.1rem">Epilogue: body and interface text at 16 px or larger, bold for labels.</p>
+    <p class="small muted">All three are the fonts on Lilli's public site and are licensed under the SIL Open Font License, bundled locally with @fontsource.</p>
+  </section>
+
+  <section class="card"><h2>Components</h2>
+    <div class="row"><button class="btn btn-primary">Primary <span aria-hidden="true">⟶</span></button><button class="btn btn-outline">Outline pill</button>
+      <span class="pill pill-ok">✓ Reporting</span><span class="pill pill-wait">◔ Pending</span><span class="pill pill-warn">! Stale</span><span class="pill pill-bad">? No data</span><span class="pill pill-off">– Not shared</span><span class="synth">synthetic</span></div>
+    <p class="small">Every state uses an icon and a word, never colour alone. Missing and stale data use dashed card borders.</p>
+  </section>
+
+  <section class="card"><h2>Public references (screenshots for comparison)</h2>
+    <div class="ref">
+      <figure><img src="/brand/ref-app-mockup.png" alt="Lilli's published app mockup with sensor status, a person circle and kitchen cards" /><figcaption class="small">App imagery published on Lilli's For Families page</figcaption></figure>
+      <figure><img src="/brand/ref-families-desktop.png" alt="Lilli For Families page hero with lemon background" /><figcaption class="small">For Families page, desktop</figcaption></figure>
+    </div>
+  </section>
+</main>
+<footer class="foot" style="padding-bottom:2rem"><p><strong>Independent concept by Ayo Ahmed</strong></p><p>Not affiliated with, endorsed by or built for Intelligent Lilli.</p></footer>
+</body></html>
