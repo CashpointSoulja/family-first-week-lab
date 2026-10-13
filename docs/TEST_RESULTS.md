@@ -1,5 +1,7 @@
 # Test results
 
+> **Historical, pre-release.** This describes the state before publication. The current release record is [LIVE_RELEASE.md](LIVE_RELEASE.md), which supersedes the deployment and video claims here.
+
 Actual output from the `audit-fix/worker-backend` branch, run locally on 2026-10-13 (Node 24, Chromium from Playwright, `wrangler dev` with the real local workerd runtime and SQLite Durable Object storage). Absolute paths are shortened to `<repo>`. CI runs the same commands ([ci.yml](../.github/workflows/ci.yml)).
 
 ## Summary

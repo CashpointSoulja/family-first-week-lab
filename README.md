@@ -2,6 +2,11 @@
 
 **An independent product concept by Ayo Ahmed, made for my application to Lilli's Product Manager role.** It is not affiliated with, endorsed by or built for Intelligent Lilli, and it is not a Lilli product. The Lilli name and logo belong to their owner and appear only to show the concept in context. Every person, home, sensor event and number is synthetic. This is not a medical or safety service.
 
+## Live release
+- Live demo: https://family-first-week-lab.ayoahmed-49d.workers.dev
+- Voiced public walkthrough: https://drive.google.com/file/d/1GBl_UprS8gEWw0QNqVvr5BRV3e6pe_8V/view?usp=drivesdk&authuser=ayomideahmedcp%40gmail.com
+- Release record, checks and limits: [docs/LIVE_RELEASE.md](docs/LIVE_RELEASE.md)
+
 ## The idea
 Lilli's homepage currently invites families to join a waiting list. Whatever the real onboarding looks like, a family product has to get two people through the first week: the family member who buys it, and the person being monitored, who has the right to say no. This prototype is my take on that first week:
 

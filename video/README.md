@@ -1,5 +1,7 @@
 # Walkthrough video source
 
+> **Historical, pre-release.** This describes the state before publication. The current release record is [LIVE_RELEASE.md](../docs/LIVE_RELEASE.md), which supersedes the deployment and video claims here.
+
 The public video is recorded and uploaded separately, after audit and deployment. This folder holds the grounded source for it:
 
 | File | What it is |

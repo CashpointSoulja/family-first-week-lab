@@ -1,5 +1,7 @@
 # Deploy (prepared, not deployed)
 
+> **Historical, pre-release.** This describes the state before publication. The current release record is [LIVE_RELEASE.md](LIVE_RELEASE.md), which supersedes the deployment and video claims here.
+
 One Cloudflare Worker serves the static build (`dist/`) and the `/api/*` routes. Each visitor gets one **SQLite-backed Durable Object** (`VisitorLab`). Nothing else is used: no KV, D1, R2, Queues, vars, secrets or paid features. SQLite-backed Durable Objects are available on the Workers Free plan. Design and API: [BACKEND.md](BACKEND.md).
 
 Config: [`wrangler.jsonc`](../wrangler.jsonc):
