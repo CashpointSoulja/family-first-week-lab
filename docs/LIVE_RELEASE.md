@@ -3,7 +3,7 @@
 I published and independently checked this concept on 13 October 2026. All people, numbers and scenarios are synthetic. It is an independent portfolio concept, not an affiliated product or production service.
 
 - Live demo: https://family-first-week-lab.ayoahmed-49d.workers.dev
-- Voiced public walkthrough: https://drive.google.com/file/d/1GBl_UprS8gEWw0QNqVvr5BRV3e6pe_8V/view?usp=drivesdk&authuser=ayomideahmedcp%40gmail.com
+- Voiced public walkthrough: https://drive.google.com/file/d/1GBl_UprS8gEWw0QNqVvr5BRV3e6pe_8V/view
 - The video is a 93.4-second recording of the real public demo, not a mockup. It has pointer movement, narration and captions.
 - Video access: anyone with the link can view, verified after upload.
 - Reviewed code commit: `62c59968f91ee8e345ffafdbc7dc912eaec7b62f`

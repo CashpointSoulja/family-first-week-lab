@@ -4,7 +4,7 @@
 
 ## Live release
 - Live demo: https://family-first-week-lab.ayoahmed-49d.workers.dev
-- Voiced public walkthrough: https://drive.google.com/file/d/1GBl_UprS8gEWw0QNqVvr5BRV3e6pe_8V/view?usp=drivesdk&authuser=ayomideahmedcp%40gmail.com
+- Voiced public walkthrough: https://drive.google.com/file/d/1GBl_UprS8gEWw0QNqVvr5BRV3e6pe_8V/view
 - Release record, checks and limits: [docs/LIVE_RELEASE.md](docs/LIVE_RELEASE.md)
 
 ## The idea
