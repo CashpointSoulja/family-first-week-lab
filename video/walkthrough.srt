@@ -1,0 +1,160 @@
+1
+00:00:00,000 --> 00:00:05,187
+Family First-Week Lab: an independent
+concept for Lilli's Product Manager role
+
+2
+00:00:05,367 --> 00:00:09,462
+It isn't a Lilli product, and every
+household and number is made up
+
+3
+00:00:09,642 --> 00:00:15,441
+Lilli's family product is waitlisted,
+so I worked from public pages only
+
+4
+00:00:15,740 --> 00:00:19,921
+A fictional household: Grace, 81,
+and her son Daniel
+
+5
+00:00:20,101 --> 00:00:23,369
+His goal: feel reassured without
+calling every day
+
+6
+00:00:23,669 --> 00:00:29,518
+This panel says what is simulated.
+Sensors match Lilli's public kit
+
+7
+00:00:29,818 --> 00:00:35,095
+Consent comes first: Grace is asked
+about each area, one at a time
+
+8
+00:00:35,395 --> 00:00:41,053
+The invitation is pending. Nothing is
+collected, and he can't answer for her
+
+9
+00:00:41,353 --> 00:00:46,315
+Jumping ahead to Today shows
+"Waiting for consent", with no data
+
+10
+00:00:46,615 --> 00:00:51,882
+Now viewing as Grace. Nothing is
+pre-ticked: she chooses
+
+11
+00:00:52,182 --> 00:00:56,437
+Each area has a plain description
+of exactly what it covers
+
+12
+00:00:56,617 --> 00:01:00,154
+She shares five areas and keeps
+bathroom visits private
+
+13
+00:01:00,454 --> 00:01:05,011
+Daniel sees what she said yes to,
+and that she can change it any time
+
+14
+00:01:05,313 --> 00:01:08,805
+Setup counts only the hub and the
+sensors Grace agreed to
+
+15
+00:01:08,985 --> 00:01:12,777
+A silent sensor counts as missing,
+never as fine
+
+16
+00:01:13,077 --> 00:01:16,425
+The first useful insight is about
+routine, not health
+
+17
+00:01:16,605 --> 00:01:22,048
+Kettle first used around 7:40, with
+freshness and coverage alongside
+
+18
+00:01:22,348 --> 00:01:27,013
+It says how sure it is: sensors can't
+tell who used the kettle, or why
+
+19
+00:01:27,314 --> 00:01:32,616
+A harder case: the hub went quiet
+30 hours ago (simulated)
+
+20
+00:01:32,796 --> 00:01:38,026
+Instead of looking calm, it says so,
+and suggests a call or a message
+
+21
+00:01:38,326 --> 00:01:42,859
+Another simulated week. Here,
+the routine looks different
+
+22
+00:01:43,039 --> 00:01:46,736
+Fewer front-door opens and kettle
+uses in the last three days
+
+23
+00:01:47,037 --> 00:01:52,724
+It doesn't guess why. It suggests
+a relaxed check-in
+
+24
+00:01:52,904 --> 00:01:56,888
+Weekly digest by default,
+and no instant alerts
+
+25
+00:01:57,188 --> 00:02:02,037
+Patchy coverage is a data gap,
+not a sign that nothing changed
+
+26
+00:02:02,337 --> 00:02:04,592
+Grace can stop sharing
+at any time
+
+27
+00:02:04,772 --> 00:02:08,838
+Then Daniel's insights disappear,
+including earlier ones
+
+28
+00:02:09,138 --> 00:02:11,977
+Today now says sharing
+has been turned off
+
+29
+00:02:12,277 --> 00:02:17,395
+The product lab: hypotheses and
+two onboarding copy variants
+
+30
+00:02:17,575 --> 00:02:21,114
+A live event log, with no names
+or raw sensor data
+
+31
+00:02:21,414 --> 00:02:28,196
+The funnel is synthetic: not Lilli
+data, and no lift is claimed
+
+32
+00:02:28,494 --> 00:02:35,683
+PRD, metrics, experiments and tests
+are in the repo. By Ayo Ahmed
+

@@ -22,7 +22,7 @@ Lilli's homepage currently invites families to join a waiting list. Whatever the
 | [Metrics](docs/METRICS.md) · [Experiments](docs/EXPERIMENTS.md) | Denominators, event properties, exclusions, guardrails; two pre-registered tests, no lift claimed |
 | [Trade-offs and risks](docs/TRADEOFFS_AND_RISKS.md) · [Role viability](docs/ROLE_VIABILITY.md) · [V2 roadmap](docs/ROADMAP_V2.md) | |
 | [Test plan](docs/TEST_PLAN.md) · [Test results](docs/TEST_RESULTS.md) | Actual command output |
-| [Sources and limitations](docs/SOURCES.md) · [Deploy](docs/DEPLOY.md) · [Video](video/README.md) | |
+| [Sources and limitations](docs/SOURCES.md) · [Deploy](docs/DEPLOY.md) · [Walkthrough script and flow](video/README.md) | |
 
 ## Run it
 ```bash
