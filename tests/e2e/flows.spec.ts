@@ -3,23 +3,37 @@ import AxeBuilder from '@axe-core/playwright';
 
 const ALL = ['drinks', 'meals', 'outside', 'wake', 'night', 'bathroom'];
 
+test.beforeEach(async ({ page }, info) => {
+  const ms = Number(info.project.metadata?.latencyMs ?? 0);
+  if (ms > 0) await page.route('**/api/**', async (r) => { await new Promise((res) => setTimeout(res, ms)); await r.fallback(); });
+});
+
 async function open(page: Page, path: string) {
   await page.goto(path);
   await page.waitForSelector('body[data-lab="ok"]');
+}
+/** The pending notice is drawn synchronously on click, so once it is gone the server has answered and the screen shows that answer. */
+async function settled(page: Page) {
+  await expect(page.locator('#api-pending')).toHaveCount(0);
 }
 async function invite(page: Page) {
   await open(page, '/#/start');
   await page.getByRole('button', { name: /Continue to consent/ }).click();
   await page.locator('#send-invite').click();
+  await settled(page);
+  await expect(page.locator('#as-monitored')).toBeVisible();
 }
 async function acceptAs(page: Page, cats = ALL) {
   await page.locator('#as-monitored').click();
   for (const c of cats) await page.check(`input[value=${c}]`);
   await page.getByRole('button', { name: "Share what I've chosen" }).click();
+  await settled(page);
 }
 async function pickScenario(page: Page, id: string) {
   await open(page, '/#/lab');
   await page.selectOption('#scenario-lab', id);
+  await settled(page);
+  await expect.poll(async () => (await lab(page)).scenario).toBe(id);
 }
 async function axe(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
@@ -110,10 +124,17 @@ test('3 setup: readiness counts only shared sensors; pairing simulated', async (
   await expect(page.getByText('Not paired')).toBeVisible();
   await expect(page.getByText('Waiting for first event')).toBeVisible();
   await axe(page);
-  await page.getByRole('button', { name: 'Pair (simulated)' }).click();
-  await page.getByRole('button', { name: 'Send test event (simulated)' }).first().click();
-  await page.getByRole('button', { name: 'Send test event (simulated)' }).first().click();
+  const toPair = await page.locator('[data-sensor-status=notPaired]').getAttribute('data-sensor');
+  await page.locator(`[data-pair="${toPair}"]`).click();
+  await expect(page.locator(`[data-sensor="${toPair}"]`)).toHaveAttribute('data-sensor-status', 'waiting');
+  for (let i = 0; i < 2; i++) {
+    const btn = page.getByRole('button', { name: 'Send test event (simulated)' }).first();
+    const sensor = await btn.getAttribute('data-test');
+    await btn.click();
+    await expect(page.locator(`[data-sensor="${sensor}"]`)).toHaveAttribute('data-sensor-status', 'ready');
+  }
   await expect(page.getByRole('heading', { name: '7 of 7 needed sensors reporting' })).toBeVisible();
+  await expect(page.locator('#api-pending')).toHaveCount(0);
   await page.locator('#to-today').click();
   await expect(page.locator('[data-status=tooEarly]')).toBeVisible();
 });
@@ -291,4 +312,113 @@ test('backend: if saved state cannot load, nothing is shown', async ({ page }) =
   await page.locator('#retry-load').click();
   await ready(page);
   await expect(page.locator('h1')).not.toContainText('Nothing to');
+});
+
+/* ---------- pending commands at real network latency ---------- */
+
+async function toSetup(page: Page) {
+  await pickScenario(page, 'day0');
+  await invite(page);
+  await acceptAs(page);
+  await page.locator('#to-setup').click();
+  await expect(page.getByRole('heading', { name: '5 of 7 needed sensors reporting' })).toBeVisible();
+}
+/** Holds every /api/command until release() is called, and records the command types the page sent. */
+async function holdCommands(page: Page, answer?: () => { status: number; body: unknown }) {
+  const sent: string[] = [];
+  let open!: () => void;
+  let gate = new Promise<void>((r) => { open = r; });
+  page.on('request', (r) => { if (r.method() === 'POST' && r.url().endsWith('/api/command')) sent.push(r.postDataJSON().type); });
+  await page.route('**/api/command', async (r) => {
+    await gate;
+    const a = answer?.();
+    if (a) await r.fulfill({ status: a.status, contentType: 'application/json', body: JSON.stringify(a.body) });
+    else await r.fallback();
+  });
+  return {
+    sent,
+    release() { open(); gate = new Promise<void>((r) => { open = r; }); },
+  };
+}
+
+test('latency: the audit click sequence completes with 800 ms per command', async ({ page }) => {
+  await toSetup(page);
+  await page.route('**/api/command', async (r) => { await new Promise((res) => setTimeout(res, 800)); await r.fallback(); });
+  await page.getByRole('button', { name: 'Pair (simulated)' }).click();
+  await page.getByRole('button', { name: 'Send test event (simulated)' }).first().click();
+  await page.getByRole('button', { name: 'Send test event (simulated)' }).first().click();
+  await expect(page.getByRole('heading', { name: '7 of 7 needed sensors reporting' })).toBeVisible();
+  await page.reload();
+  await ready(page);
+  await expect(page.getByRole('heading', { name: '7 of 7 needed sensors reporting' })).toBeVisible();
+});
+
+test('latency: clicks on paused controls are dropped, not sent against stale state', async ({ page }) => {
+  await toSetup(page);
+  const hold = await holdCommands(page);
+  const stale = page.getByRole('button', { name: 'Send test event (simulated)' }).first();
+  const staleSensor = await stale.getAttribute('data-test');
+  await page.getByRole('button', { name: 'Pair (simulated)' }).click();
+  await expect(page.locator('#api-pending')).toContainText('Pairing the sensor (simulated)');
+  await expect(page.locator('main')).toHaveAttribute('aria-busy', 'true');
+  await expect(stale).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#to-today')).toHaveAttribute('aria-disabled', 'true');
+  await axe(page);
+  const box = (await stale.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await stale.click({ force: true });
+  await stale.focus();
+  await page.keyboard.press('Enter');
+  expect(hold.sent).toEqual(['pairSensor']);
+  hold.release();
+  await expect(page.locator('#api-pending')).toHaveCount(0);
+  await expect(page.locator('main')).not.toHaveAttribute('aria-busy', 'true');
+  expect(hold.sent).toEqual(['pairSensor']);
+  await expect(page.locator(`[data-sensor="${staleSensor}"]`)).toHaveAttribute('data-sensor-status', 'waiting');
+  await expect(page.getByRole('heading', { name: '5 of 7 needed sensors reporting' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send test event (simulated)' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Send test event (simulated)' }).first()).not.toHaveAttribute('aria-disabled', 'true');
+});
+
+test('latency: a slow failed command shows the error, unpauses, and changes nothing', async ({ page }) => {
+  await toSetup(page);
+  const hold = await holdCommands(page, () => ({ status: 503, body: { error: 'storage_unavailable', message: 'Lab storage is unavailable. Nothing was changed.' } }));
+  const pair = page.getByRole('button', { name: 'Pair (simulated)' });
+  const sensor = await pair.getAttribute('data-pair');
+  await pair.click();
+  await expect(page.locator('#api-pending')).toBeVisible();
+  hold.release();
+  await expect(page.locator('#api-error')).toContainText('Lab storage is unavailable');
+  await expect(page.locator('#api-pending')).toHaveCount(0);
+  await expect(page.locator(`[data-sensor="${sensor}"]`)).toHaveAttribute('data-sensor-status', 'notPaired');
+  await expect(pair).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('heading', { name: '5 of 7 needed sensors reporting' })).toBeVisible();
+  await axe(page);
+  await page.unroute('**/api/command');
+  await page.reload();
+  await ready(page);
+  await expect(page.locator(`[data-sensor="${sensor}"]`)).toHaveAttribute('data-sensor-status', 'notPaired');
+  expect(hold.sent).toEqual(['pairSensor']);
+});
+
+test('latency: keyboard user keeps focus while pending and lands on the next step', async ({ page }) => {
+  await toSetup(page);
+  const hold = await holdCommands(page);
+  const pair = page.getByRole('button', { name: 'Pair (simulated)' });
+  const sensor = await pair.getAttribute('data-pair');
+  await pair.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#api-pending')).toBeVisible();
+  await expect(pair).toBeFocused();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Space');
+  hold.release();
+  await expect(page.locator(`[data-sensor="${sensor}"]`)).toHaveAttribute('data-sensor-status', 'waiting');
+  await expect(page.locator(`[data-test="${sensor}"]`)).toBeFocused();
+  expect(hold.sent).toEqual(['pairSensor']);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#api-pending')).toContainText('Sending the test event');
+  hold.release();
+  await expect(page.locator(`[data-sensor="${sensor}"]`)).toHaveAttribute('data-sensor-status', 'ready');
+  expect(hold.sent).toEqual(['pairSensor', 'testSensor']);
 });

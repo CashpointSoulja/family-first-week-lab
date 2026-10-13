@@ -56,6 +56,18 @@ Every API response has `Cache-Control: no-store`, `X-Content-Type-Options: nosni
 - **Feedback and check-ins** are refused when nothing is shared.
 - **Derived outputs follow current consent.** The first insight, coverage, weekly trends, coverage days and the export are recomputed from the stored state on every request. Unshared areas carry no timing, reading or trend. The export omits them entirely. Nothing derived is cached between revisions.
 
+## Browser client: one command at a time
+
+At real network latency a button drawn from the last snapshot can be out of date before the server answers. An earlier build let a second click go out against that old screen: after "Pair", a quick "Send test event" landed on the sensor that was already being tested, so setup stopped at 6 of 7. The client now works like this:
+
+- A user command is single-flight. On click, the screen controls are paused before the request leaves: buttons get `aria-disabled="true"` and stay focusable, and form fields are disabled. A "… Buttons are paused until the lab server answers." status banner appears, and `main` gets `aria-busy="true"`. The banner sticks below the header, so it stays in view next to the control that was used.
+- A click, tap or Enter on a paused control is dropped, not queued. Nothing is sent for it.
+- When the server answers, the screen is redrawn from the returned snapshot and the controls come back. A rejected or failed command shows the server's message in a sticky alert, and the screen keeps the last saved state. A stale revision reloads the latest state and says the action was not applied.
+- Page-view events run in the background and never pause the screen. Every request still goes through one queue and carries the newest revision the client has seen.
+- After pairing, keyboard focus moves to that sensor's "Send test event" button.
+
+The server still checks every command's revision and transition, so a stale or duplicate command that reached it would be refused anyway. The client change stops the user's click from being spent on that.
+
 ## Storage
 
 The Durable Object has three SQLite tables:

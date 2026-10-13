@@ -14,5 +14,7 @@ export default defineConfig({
   projects: [
     { name: 'mobile-390', use: { browserName: 'chromium', viewport: { width: 390, height: 844 }, hasTouch: true } },
     { name: 'desktop-1366', use: { browserName: 'chromium', viewport: { width: 1366, height: 900 } } },
+    // Same suite with every /api call held for 450 ms, so clicks land while a command is still pending.
+    { name: 'mobile-390-latency', metadata: { latencyMs: 450 }, use: { browserName: 'chromium', viewport: { width: 390, height: 844 }, hasTouch: true } },
   ],
 });

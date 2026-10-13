@@ -99,6 +99,7 @@ async function run([kind, a, b]) {
   await moveTo(bb.x + Math.min(bb.width / 2, 40), bb.y + bb.height / 2);
   if (kind === 'click') { await page.mouse.down(); await page.waitForTimeout(90); await page.mouse.up(); }
   if (kind === 'select') { await loc.focus(); await loc.selectOption(b); }
+  await page.waitForSelector('#api-pending', { state: 'detached', timeout: 15000 });
   await page.waitForTimeout(250);
 }
 

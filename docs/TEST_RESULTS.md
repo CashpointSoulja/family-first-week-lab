@@ -11,9 +11,9 @@ Actual output from the `audit-fix/worker-backend` branch, run locally on 2026-10
 | Consent eval, real rules | `npm run eval` | 14 of 14 cases match expected |
 | Consent eval, deliberately broken rule | `npm run eval:broken` | turned red as required: 2 of 14 cases fail (C1, C2) |
 | API tests against a local Worker + SQLite Durable Object | `npm run test:api` | 37 of 37 passed |
-| Browser tests against the same Worker | `npm run e2e` | 48 of 48 passed: 24 tests, each at 390 px and 1366 px |
+| Browser tests against the same Worker | `npm run e2e` | 84 of 84 passed: 28 tests in three projects (390 px, 1366 px, and 390 px with every `/api` call held 450 ms) |
 | Cloudflare Workers Free dry run | `npm run cf:dryrun` | passed; bindings are `VISITOR` (Durable Object) and `ASSETS`. Not deployed |
-| Publication audit | `npm run audit:publish` | passed: 130 tracked files and git history clean |
+| Publication audit | `npm run audit:publish` | passed: 134 tracked files and git history clean |
 
 ## What the backend tests prove
 
@@ -29,6 +29,7 @@ Actual output from the `audit-fix/worker-backend` branch, run locally on 2026-10
 | Fail-closed storage | API: "a failed write rolls back state, command log and audit, and reports 503", "a failed read shows nothing rather than a default state". e2e: "a failed write shows an error and changes nothing", "if saved state cannot load, nothing is shown" |
 | Reset and reload | API: "reload returns the same saved state; reset starts over without reusing revisions". e2e: "reload keeps the saved synthetic state" |
 | Bounded history | API: "caps events, audit rows and the replay window" (521 events sent, 200 kept; 500 audit rows kept) |
+| Commands at real network latency: no stale clicks, pending and error feedback | e2e project `mobile-390-latency` runs the whole suite with 450 ms on every `/api` call. e2e: "the audit click sequence completes with 800 ms per command", "clicks on paused controls are dropped, not sent against stale state", "a slow failed command shows the error, unpauses, and changes nothing", "keyboard user keeps focus while pending and lands on the next step" |
 | Eval turns red with a broken rule | `npm run eval:broken` exits 0 only if at least one case is red |
 
 ## Type check
@@ -172,61 +173,113 @@ RED CHECK PASSED: the broken rule turned 2 case(s) red (C1, C2).
 ```
 
 ## Browser tests (e2e)
-Playwright builds the app, then starts `wrangler dev` on port 4174 with fresh Durable Object storage. Each test uses a new browser context, and so a new visitor cookie and Durable Object.
+Playwright builds the app, then starts `wrangler dev` on port 4174 with fresh Durable Object storage. Each test uses a new browser context, and so a new visitor cookie and Durable Object. The `mobile-390-latency` project runs the same tests with every `/api` request held for 450 ms before it reaches the Worker, so clicks land while a command is still pending.
 
 When a test deliberately aborts or intercepts a request, the local workerd runtime logs `disconnected: write(): Broken pipe`. That is a server log line, not a test failure, so it is left out of the excerpt below.
 ```text
-Running 48 tests using 2 workers
-  ✓  1 [mobile-390] › flows.spec.ts:29:1 › 1 start: fictional household, relationship, goal, simulated-data explainer (661ms)
-  ✓  2 [desktop-1366] › flows.spec.ts:29:1 › 1 start: fictional household, relationship, goal, simulated-data explainer (669ms)
-  ✓  3 [mobile-390] › flows.spec.ts:42:1 › 2 consent: pending blocks data; no bypass via direct routes (721ms)
-  ✓  4 [desktop-1366] › flows.spec.ts:42:1 › 2 consent: pending blocks data; no bypass via direct routes (831ms)
-  ✓  5 [mobile-390] › flows.spec.ts:57:1 › 2 consent: accept needs a choice, granular sharing respected (1.1s)
-  ✓  6 [desktop-1366] › flows.spec.ts:57:1 › 2 consent: accept needs a choice, granular sharing respected (1.1s)
-  ✓  7 [mobile-390] › flows.spec.ts:72:1 › 2 consent: decline shares nothing; ask again returns to pending (916ms)
-  ✓  8 [desktop-1366] › flows.spec.ts:72:1 › 2 consent: decline shares nothing; ask again returns to pending (921ms)
-  ✓  9 [mobile-390] › flows.spec.ts:85:1 › 2 consent: revoke one area then everything; insights disappear (1.0s)
-  ✓  10 [desktop-1366] › flows.spec.ts:85:1 › 2 consent: revoke one area then everything; insights disappear (1.0s)
-  ✓  11 [mobile-390] › flows.spec.ts:104:1 › 3 setup: readiness counts only shared sensors; pairing simulated (1.4s)
-  ✓  12 [desktop-1366] › flows.spec.ts:104:1 › 3 setup: readiness counts only shared sensors; pairing simulated (1.6s)
-  ✓  13 [mobile-390] › flows.spec.ts:127:3 › 4 insight: stable -> ready (1.2s)
-  ✓  14 [desktop-1366] › flows.spec.ts:127:3 › 4 insight: stable -> ready (1.2s)
-  ✓  15 [mobile-390] › flows.spec.ts:127:3 › 4 insight: stale -> stale (1.1s)
-  ✓  16 [desktop-1366] › flows.spec.ts:127:3 › 4 insight: stale -> stale (1.2s)
-  ✓  17 [mobile-390] › flows.spec.ts:127:3 › 4 insight: gaps -> ready (1.2s)
-  ✓  18 [desktop-1366] › flows.spec.ts:127:3 › 4 insight: gaps -> ready (1.2s)
-  ✓  19 [mobile-390] › flows.spec.ts:127:3 › 4 insight: day0 -> tooEarly (1.2s)
-  ✓  20 [desktop-1366] › flows.spec.ts:127:3 › 4 insight: day0 -> tooEarly (1.2s)
-  ✓  21 [mobile-390] › flows.spec.ts:149:3 › 5 weekly: stable -> stable (1.4s)
-  ✓  22 [desktop-1366] › flows.spec.ts:149:3 › 5 weekly: stable -> stable (1.5s)
-  ✓  23 [mobile-390] › flows.spec.ts:149:3 › 5 weekly: changed -> changed (1.4s)
-  ✓  24 [desktop-1366] › flows.spec.ts:149:3 › 5 weekly: changed -> changed (1.5s)
-  ✓  25 [mobile-390] › flows.spec.ts:149:3 › 5 weekly: gaps -> insufficient (1.4s)
-  ✓  26 [desktop-1366] › flows.spec.ts:149:3 › 5 weekly: gaps -> insufficient (1.5s)
-  ✓  27 [mobile-390] › flows.spec.ts:149:3 › 5 weekly: stale -> forming (1.4s)
-  ✓  28 [desktop-1366] › flows.spec.ts:149:3 › 5 weekly: stale -> forming (1.5s)
-  ✓  29 [mobile-390] › flows.spec.ts:165:1 › 6 lab: synthetic labels, copy variant changes start screen, events recorded (776ms)
-  ✓  31 [mobile-390] › flows.spec.ts:179:1 › keyboard: complete invite and consent with keyboard only (305ms)
-  ✓  32 [mobile-390] › flows.spec.ts:199:1 › keyboard: skip link and visible focus ring (109ms)
-  ✓  30 [desktop-1366] › flows.spec.ts:165:1 › 6 lab: synthetic labels, copy variant changes start screen, events recorded (980ms)
-  ✓  34 [desktop-1366] › flows.spec.ts:179:1 › keyboard: complete invite and consent with keyboard only (297ms)
-  ✓  33 [mobile-390] › flows.spec.ts:210:1 › responsive: no horizontal overflow on any screen (736ms)
-  ✓  35 [desktop-1366] › flows.spec.ts:199:1 › keyboard: skip link and visible focus ring (131ms)
-  ✓  36 [mobile-390] › flows.spec.ts:222:1 › brand guide page passes axe (471ms)
-  ✓  37 [desktop-1366] › flows.spec.ts:210:1 › responsive: no horizontal overflow on any screen (709ms)
-  ✓  38 [mobile-390] › flows.spec.ts:230:1 › backend: reload keeps the saved synthetic state (605ms)
-  ✓  39 [desktop-1366] › flows.spec.ts:222:1 › brand guide page passes axe (466ms)
-  ✓  41 [desktop-1366] › flows.spec.ts:230:1 › backend: reload keeps the saved synthetic state (707ms)
-  ✓  40 [mobile-390] › flows.spec.ts:244:1 › backend: a second tab revoking consent is not overwritten by a stale first tab (1.0s)
-  ✓  42 [desktop-1366] › flows.spec.ts:244:1 › backend: a second tab revoking consent is not overwritten by a stale first tab (918ms)
-  ✓  43 [mobile-390] › flows.spec.ts:259:1 › backend: export follows current consent after a category revoke (849ms)
-  ✓  45 [mobile-390] › flows.spec.ts:270:1 › backend: a failed write shows an error and changes nothing (289ms)
-  ✓  44 [desktop-1366] › flows.spec.ts:259:1 › backend: export follows current consent after a category revoke (830ms)
-  ✓  46 [mobile-390] › flows.spec.ts:282:1 › backend: if saved state cannot load, nothing is shown (551ms)
-  ✓  47 [desktop-1366] › flows.spec.ts:270:1 › backend: a failed write shows an error and changes nothing (373ms)
-  ✓  48 [desktop-1366] › flows.spec.ts:282:1 › backend: if saved state cannot load, nothing is shown (552ms)
-  48 passed (25.2s)
+Running 84 tests using 3 workers
+  ✓  2 [mobile-390] › flows.spec.ts:43:1 › 1 start: fictional household, relationship, goal, simulated-data explainer (754ms)
+  ✓  3 [desktop-1366] › flows.spec.ts:43:1 › 1 start: fictional household, relationship, goal, simulated-data explainer (757ms)
+  ✓  4 [mobile-390] › flows.spec.ts:56:1 › 2 consent: pending blocks data; no bypass via direct routes (634ms)
+  ✓  5 [desktop-1366] › flows.spec.ts:56:1 › 2 consent: pending blocks data; no bypass via direct routes (838ms)
+  ✓  1 [mobile-390-latency] › flows.spec.ts:43:1 › 1 start: fictional household, relationship, goal, simulated-data explainer (2.2s)
+  ✓  6 [mobile-390] › flows.spec.ts:71:1 › 2 consent: accept needs a choice, granular sharing respected (1.2s)
+  ✓  7 [desktop-1366] › flows.spec.ts:71:1 › 2 consent: accept needs a choice, granular sharing respected (1.3s)
+  ✓  9 [mobile-390] › flows.spec.ts:86:1 › 2 consent: decline shares nothing; ask again returns to pending (1.0s)
+  ✓  10 [desktop-1366] › flows.spec.ts:86:1 › 2 consent: decline shares nothing; ask again returns to pending (1.1s)
+  ✓  11 [mobile-390] › flows.spec.ts:99:1 › 2 consent: revoke one area then everything; insights disappear (1.1s)
+  ✓  12 [desktop-1366] › flows.spec.ts:99:1 › 2 consent: revoke one area then everything; insights disappear (1.2s)
+  ✓  8 [mobile-390-latency] › flows.spec.ts:56:1 › 2 consent: pending blocks data; no bypass via direct routes (3.0s)
+  ✓  13 [mobile-390] › flows.spec.ts:118:1 › 3 setup: readiness counts only shared sensors; pairing simulated (1.9s)
+  ✓  14 [desktop-1366] › flows.spec.ts:118:1 › 3 setup: readiness counts only shared sensors; pairing simulated (1.9s)
+  ✓  16 [mobile-390] › flows.spec.ts:148:3 › 4 insight: stable -> ready (1.5s)
+  ✓  17 [desktop-1366] › flows.spec.ts:148:3 › 4 insight: stable -> ready (1.5s)
+  ✓  18 [mobile-390] › flows.spec.ts:148:3 › 4 insight: stale -> stale (1.5s)
+  ✓  19 [desktop-1366] › flows.spec.ts:148:3 › 4 insight: stale -> stale (1.4s)
+  ✓  15 [mobile-390-latency] › flows.spec.ts:71:1 › 2 consent: accept needs a choice, granular sharing respected (5.8s)
+  ✓  20 [mobile-390] › flows.spec.ts:148:3 › 4 insight: gaps -> ready (1.4s)
+  ✓  21 [desktop-1366] › flows.spec.ts:148:3 › 4 insight: gaps -> ready (1.5s)
+  ✓  23 [mobile-390] › flows.spec.ts:148:3 › 4 insight: day0 -> tooEarly (1.4s)
+  ✓  24 [desktop-1366] › flows.spec.ts:148:3 › 4 insight: day0 -> tooEarly (1.6s)
+  ✓  25 [mobile-390] › flows.spec.ts:170:3 › 5 weekly: stable -> stable (1.6s)
+  ✓  26 [desktop-1366] › flows.spec.ts:170:3 › 5 weekly: stable -> stable (1.6s)
+  ✓  27 [mobile-390] › flows.spec.ts:170:3 › 5 weekly: changed -> changed (1.6s)
+  ✓  28 [desktop-1366] › flows.spec.ts:170:3 › 5 weekly: changed -> changed (1.6s)
+  ✓  29 [mobile-390] › flows.spec.ts:170:3 › 5 weekly: gaps -> insufficient (1.6s)
+  ✓  22 [mobile-390-latency] › flows.spec.ts:86:1 › 2 consent: decline shares nothing; ask again returns to pending (6.5s)
+  ✓  30 [desktop-1366] › flows.spec.ts:170:3 › 5 weekly: gaps -> insufficient (1.7s)
+  ✓  31 [mobile-390] › flows.spec.ts:170:3 › 5 weekly: stale -> forming (1.6s)
+  ✓  33 [desktop-1366] › flows.spec.ts:170:3 › 5 weekly: stale -> forming (1.7s)
+  ✓  34 [mobile-390] › flows.spec.ts:186:1 › 6 lab: synthetic labels, copy variant changes start screen, events recorded (909ms)
+  ✓  36 [mobile-390] › flows.spec.ts:200:1 › keyboard: complete invite and consent with keyboard only (429ms)
+  ✓  37 [mobile-390] › flows.spec.ts:220:1 › keyboard: skip link and visible focus ring (140ms)
+  ✓  35 [desktop-1366] › flows.spec.ts:186:1 › 6 lab: synthetic labels, copy variant changes start screen, events recorded (1.1s)
+  ✓  38 [mobile-390] › flows.spec.ts:231:1 › responsive: no horizontal overflow on any screen (840ms)
+  ✓  39 [desktop-1366] › flows.spec.ts:200:1 › keyboard: complete invite and consent with keyboard only (387ms)
+  ✓  41 [desktop-1366] › flows.spec.ts:220:1 › keyboard: skip link and visible focus ring (145ms)
+  ✓  40 [mobile-390] › flows.spec.ts:243:1 › brand guide page passes axe (565ms)
+  ✓  42 [desktop-1366] › flows.spec.ts:231:1 › responsive: no horizontal overflow on any screen (967ms)
+  ✓  43 [mobile-390] › flows.spec.ts:251:1 › backend: reload keeps the saved synthetic state (647ms)
+  ✓  44 [desktop-1366] › flows.spec.ts:243:1 › brand guide page passes axe (543ms)
+  ✓  45 [mobile-390] › flows.spec.ts:265:1 › backend: a second tab revoking consent is not overwritten by a stale first tab (1.1s)
+  ✓  46 [desktop-1366] › flows.spec.ts:251:1 › backend: reload keeps the saved synthetic state (684ms)
+  ✓  47 [mobile-390] › flows.spec.ts:280:1 › backend: export follows current consent after a category revoke (1.0s)
+  ✓  48 [desktop-1366] › flows.spec.ts:265:1 › backend: a second tab revoking consent is not overwritten by a stale first tab (1.2s)
+  ✓  49 [mobile-390] › flows.spec.ts:291:1 › backend: a failed write shows an error and changes nothing (301ms)
+  ✓  51 [mobile-390] › flows.spec.ts:303:1 › backend: if saved state cannot load, nothing is shown (553ms)
+  ✓  50 [desktop-1366] › flows.spec.ts:280:1 › backend: export follows current consent after a category revoke (1.0s)
+  ✓  53 [desktop-1366] › flows.spec.ts:291:1 › backend: a failed write shows an error and changes nothing (473ms)
+  ✓  32 [mobile-390-latency] › flows.spec.ts:99:1 › 2 consent: revoke one area then everything; insights disappear (9.3s)
+  ✓  54 [desktop-1366] › flows.spec.ts:303:1 › backend: if saved state cannot load, nothing is shown (560ms)
+  ✓  52 [mobile-390] › flows.spec.ts:344:1 › latency: the audit click sequence completes with 800 ms per command (3.7s)
+  ✓  56 [desktop-1366] › flows.spec.ts:344:1 › latency: the audit click sequence completes with 800 ms per command (3.7s)
+  ✓  57 [mobile-390] › flows.spec.ts:356:1 › latency: clicks on paused controls are dropped, not sent against stale state (1.7s)
+  ✓  58 [desktop-1366] › flows.spec.ts:356:1 › latency: clicks on paused controls are dropped, not sent against stale state (1.7s)
+  ✓  59 [mobile-390] › flows.spec.ts:383:1 › latency: a slow failed command shows the error, unpauses, and changes nothing (1.7s)
+  ✓  61 [mobile-390] › flows.spec.ts:404:1 › latency: keyboard user keeps focus while pending and lands on the next step (1.2s)
+  ✓  60 [desktop-1366] › flows.spec.ts:383:1 › latency: a slow failed command shows the error, unpauses, and changes nothing (1.5s)
+  ✓  62 [desktop-1366] › flows.spec.ts:404:1 › latency: keyboard user keeps focus while pending and lands on the next step (1.2s)
+  ✓  55 [mobile-390-latency] › flows.spec.ts:118:1 › 3 setup: readiness counts only shared sensors; pairing simulated (9.2s)
+  ✓  63 [mobile-390-latency] › flows.spec.ts:148:3 › 4 insight: stable -> ready (6.5s)
+  ✓  64 [mobile-390-latency] › flows.spec.ts:148:3 › 4 insight: stale -> stale (6.5s)
+  ✓  65 [mobile-390-latency] › flows.spec.ts:148:3 › 4 insight: gaps -> ready (6.5s)
+  ✓  66 [mobile-390-latency] › flows.spec.ts:148:3 › 4 insight: day0 -> tooEarly (6.6s)
+  ✓  67 [mobile-390-latency] › flows.spec.ts:170:3 › 5 weekly: stable -> stable (8.9s)
+  ✓  68 [mobile-390-latency] › flows.spec.ts:170:3 › 5 weekly: changed -> changed (8.9s)
+  ✓  69 [mobile-390-latency] › flows.spec.ts:170:3 › 5 weekly: gaps -> insufficient (8.9s)
+  ✓  70 [mobile-390-latency] › flows.spec.ts:170:3 › 5 weekly: stale -> forming (8.9s)
+  ✓  71 [mobile-390-latency] › flows.spec.ts:186:1 › 6 lab: synthetic labels, copy variant changes start screen, events recorded (4.0s)
+  ✓  72 [mobile-390-latency] › flows.spec.ts:200:1 › keyboard: complete invite and consent with keyboard only (4.2s)
+  ✓  73 [mobile-390-latency] › flows.spec.ts:220:1 › keyboard: skip link and visible focus ring (875ms)
+  ✓  74 [mobile-390-latency] › flows.spec.ts:231:1 › responsive: no horizontal overflow on any screen (4.7s)
+  ✓  75 [mobile-390-latency] › flows.spec.ts:243:1 › brand guide page passes axe (530ms)
+  ✓  76 [mobile-390-latency] › flows.spec.ts:251:1 › backend: reload keeps the saved synthetic state (6.0s)
+  ✓  77 [mobile-390-latency] › flows.spec.ts:265:1 › backend: a second tab revoking consent is not overwritten by a stale first tab (5.8s)
+  ✓  78 [mobile-390-latency] › flows.spec.ts:280:1 › backend: export follows current consent after a category revoke (6.3s)
+  ✓  79 [mobile-390-latency] › flows.spec.ts:291:1 › backend: a failed write shows an error and changes nothing (3.4s)
+  ✓  80 [mobile-390-latency] › flows.spec.ts:303:1 › backend: if saved state cannot load, nothing is shown (1.3s)
+  ✓  81 [mobile-390-latency] › flows.spec.ts:344:1 › latency: the audit click sequence completes with 800 ms per command (11.8s)
+  ✓  82 [mobile-390-latency] › flows.spec.ts:356:1 › latency: clicks on paused controls are dropped, not sent against stale state (7.5s)
+  ✓  83 [mobile-390-latency] › flows.spec.ts:383:1 › latency: a slow failed command shows the error, unpauses, and changes nothing (7.4s)
+  ✓  84 [mobile-390-latency] › flows.spec.ts:404:1 › latency: keyboard user keeps focus while pending and lands on the next step (7.8s)
+  84 passed (2.9m)
 ```
+
+### Latency regression: reproduced, then fixed
+The setup step failed on the live deployment after "Pair", then two quick "Send test event" clicks. Locally it passed because `wrangler dev` answers in a few milliseconds.
+
+The cause: a command did not pause the screen while it waited. The second "Send test event" click hit the old screen, where the first visible button was still the sensor being tested. That sent a second test for the same sensor, which the server refused, and the newly paired sensor was never tested. Setup stopped at 6 of 7.
+
+Reproduced on the previous client (`src/main.ts` from `3304e6b`) with injected latency. The new 800 ms audit-sequence test, which keeps the original three back-to-back clicks, failed at 390 px with and without the 450 ms project latency. Two more failures in that run came from the updated setup test, which reads a `data-sensor-status` attribute the old client lacks. They are not counted as reproductions:
+```text
+    Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+    > 350 |   await expect(page.getByRole('heading', { name: '7 of 7 needed sensors reporting' })).toBeVisible();
+  4 failed
+```
+Before any client change, the original setup test (unchanged) also failed under the 450 ms project at the same assertion: `7 of 7 needed sensors reporting`, element not found.
+
+The fix is in the client, not in test timeouts. Details are in [BACKEND.md](BACKEND.md#browser-client-one-command-at-a-time). Expected outcomes are unchanged, and no timeout was raised. The tests now wait for observable server-confirmed state between steps: the pending banner is gone and the sensor row's `data-sensor-status` has changed. Helpers do the same after invite, accept and scenario changes. The 800 ms test keeps the original three back-to-back clicks. It passes because paused buttons are `aria-disabled`, so Playwright, like a person, can't use them until the server has answered. The "dropped" test proves the user-side behaviour. While a pair command is held, the stale "Send test event" button is hit three ways: a real mouse click at its coordinates, a forced click, and Enter. Exactly one command (`pairSensor`) reaches the server, and that sensor stays `waiting`.
+
 ## Cloudflare dry run
 ```text
 ⛅️ wrangler 4.150.0
@@ -247,7 +300,9 @@ I inspected rendered screenshots of the changed screens at 390 px and 1366 px, a
 - `8week`: the weekly summary with the export link and the desktop rail's "Server revision" line
 - `10offline`: the "Nothing to show" screen when saved state can't load
 
-That inspection caught one problem. While the server was down, the rail still showed placeholder household and consent values. It now says "Not loaded yet", and an e2e assertion covers it. The other screenshots are from the earlier build. Apart from the desktop rail's new "Server revision" line, those screens are unchanged. axe passes on every screen, including the offline one.
+For the latency fix I also inspected the setup screen while a pair command was held, and after a slow failed test event, at both widths: `6setup-pending` and `6setup-error`. The banners stay in view below the sticky header, beside the control that was used. The first capture showed the pending banner scrolled off the top of the page on mobile, so it is now sticky. axe passes in both states.
+
+The earlier backend inspection caught one problem. While the server was down, the rail still showed placeholder household and consent values. It now says "Not loaded yet", and an e2e assertion covers it. The other screenshots are from the earlier build. Apart from the desktop rail's new "Server revision" line, those screens are unchanged. axe passes on every screen, including the offline one.
 
 ## Not tested
 - Real screen readers (only axe and keyboard checks were automated).
@@ -256,4 +311,6 @@ That inspection caught one problem. While the server was down, the rail still sh
 - Any real user. No usability sessions were run.
 - Durable Objects on real Cloudflare infrastructure. Everything ran in the local workerd runtime via `wrangler dev`, and nothing was deployed.
 - Load or abuse beyond the tested limits. There is no rate limiting, so a real deployment should add Cloudflare's free rate-limiting rules.
+- Real network conditions other than a fixed injected delay: no packet loss, reordering or very slow (multi-second) links. The client retries once on a network error, with the same command id.
+- The fix against the live deployment. It has not been redeployed, by design.
 - Real identity. The role switch is a synthetic demo role, so these tests prove role rules, not who consented.

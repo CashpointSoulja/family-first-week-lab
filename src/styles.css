@@ -86,6 +86,10 @@ summary { font-weight: 700; min-height: 32px; }
 .as-banner { background: var(--mint); border-radius: 14px; padding: 0.5rem 0.9rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; justify-content: space-between; }
 .notice { background: var(--ok-bg); color: var(--ok); border-radius: 12px; padding: 0.6rem 0.9rem; margin: 0; font-weight: 700; }
 .error { background: var(--bad-bg); color: var(--bad); border-radius: 12px; padding: 0.6rem 0.9rem; font-weight: 700; margin: 0; }
+.pending { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 0.6rem 0.9rem; font-weight: 700; margin: 0; }
+[aria-disabled="true"].btn, .btn[disabled] { opacity: 0.55; }
+/* Keep save feedback in view next to whichever control was used. */
+main > .pending, main > .error { position: sticky; top: 4.25rem; z-index: 4; box-shadow: 0 2px 8px rgba(30, 48, 58, 0.15); }
 
 .app-card { background: #fff; border-radius: 24px; padding: 1.1rem; box-shadow: 0 1px 0 var(--line), 0 8px 24px rgba(13, 63, 64, 0.06); }
 .app-top { display: flex; align-items: center; gap: 1rem; }

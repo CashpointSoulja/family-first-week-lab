@@ -55,7 +55,7 @@ function onRoute() {
   S.notice = null;
   if (server === 'ok') S.error = null;
   render(true);
-  if (server === 'ok' && (S.route === 'start' || S.route === 'consent' || S.route === 'today' || S.route === 'week')) void run('viewed', { surface: S.route }, { silent: true });
+  if (server === 'ok' && (S.route === 'start' || S.route === 'consent' || S.route === 'today' || S.route === 'week')) void run('viewed', { surface: S.route }, { silent: true, background: true });
 }
 
 /* ---------- views ---------- */
@@ -242,7 +242,7 @@ function setupView() {
       const needed = req.includes(x.id);
       const st = S.sensors[x.id];
       const label: [string, string, string] = !accepted ? ['off', '–', 'Paused'] : !needed ? ['off', '–', 'Not shared, not needed'] : SENSOR_LABEL[st];
-      return `<li class="list-row">
+      return `<li class="list-row" data-sensor="${x.id}" data-sensor-status="${accepted && needed ? st : 'off'}">
         <span><strong>${esc(x.label)}</strong><br /><span class="muted small">${esc(x.place)}</span></span>
         <span class="right">${pill(label)}${accepted && needed ? sensorAction(x.id, st) : ''}</span>
       </li>`;
@@ -422,9 +422,14 @@ function rail() {
   </aside>`;
 }
 
-function render(routeChanged = false) {
+function focusKey(): string | null {
   const active = document.activeElement as HTMLElement | null;
-  const activeKey = active?.id || (active?.dataset && Object.entries(active.dataset).map(([k, v]) => `[data-${k}="${v}"]`)[0]) || (active instanceof HTMLInputElement ? `input[name="${active.name}"][value="${active.value}"]` : null);
+  return active?.id || (active?.dataset && Object.entries(active.dataset).map(([k, v]) => `[data-${k}="${v}"]`)[0]) || (active instanceof HTMLInputElement ? `input[name="${active.name}"][value="${active.value}"]` : null);
+}
+
+function render(routeChanged = false, restoreKey: string | null = null) {
+  const active = document.activeElement as HTMLElement | null;
+  const activeKey = restoreKey ?? focusKey();
   const view = server !== 'ok' ? serverView() : { start: startView, consent: S.view === 'monitored' ? consentMonitoredView : consentFamilyView, setup: setupView, today: todayView, week: weekView, lab: labView }[S.route]();
   app.innerHTML = `
   <a class="skip" href="#main">Skip to content</a>
@@ -433,7 +438,8 @@ function render(routeChanged = false) {
     <span class="concept-badge"><span class="wide">Independent </span>concept · not Lilli</span>
   </header>
   <div class="layout">
-    <main id="main" class="phone ${S.view === 'monitored' ? 'is-monitored' : ''}" data-route="${S.route}">
+    <main id="main" class="phone ${S.view === 'monitored' ? 'is-monitored' : ''}" data-route="${S.route}" ${pending ? 'aria-busy="true"' : ''}>
+      ${pending ? `<p class="pending" role="status" id="api-pending">${esc(pending)}. Buttons are paused until the lab server answers.</p>` : ''}
       ${S.notice ? `<p class="notice" role="status">${esc(S.notice)}</p>` : ''}
       ${S.error && server === 'ok' && !(S.route === 'consent' && S.view === 'monitored') ? `<p class="error" role="alert" id="api-error">${esc(S.error)}</p>` : ''}
       ${view}
@@ -447,6 +453,9 @@ function render(routeChanged = false) {
     <p><strong>Independent concept by Ayo Ahmed</strong></p>
     <p>Not affiliated with, endorsed by or built for Intelligent Lilli. The Lilli name and logo belong to their owner and are used here only to illustrate a product idea. All people, homes, sensor data and numbers are synthetic. Not a medical or safety service. <a href="/brand-guide.html">Brand guide</a></p>
   </footer>`;
+  if (pending) pauseControls();
+  if (pending) document.body.dataset.busy = 'true';
+  else delete document.body.dataset.busy;
   if (active?.tagName === 'H1' && !routeChanged) {
     (app.querySelector('h1') as HTMLElement | null)?.focus();
   } else if (routeChanged && !firstLoad) {
@@ -475,12 +484,51 @@ function adopt(snap: Snapshot) {
   D = snap.derived;
 }
 
+/** Every control that can send a command. Buttons stay focusable (aria-disabled); form fields are disabled outright. */
+function pauseControls() {
+  app.querySelectorAll<HTMLButtonElement>('.layout button').forEach((b) => b.setAttribute('aria-disabled', 'true'));
+  app.querySelectorAll<HTMLInputElement | HTMLSelectElement>('.layout input, .layout select').forEach((f) => { f.disabled = true; });
+}
+
+/** Pause the controls already on screen (keeping the user's in-progress choice visible) and say why. */
+function showPending() {
+  const main = app.querySelector('main');
+  if (!main || !pending) return;
+  main.setAttribute('aria-busy', 'true');
+  main.insertAdjacentHTML('afterbegin', `<p class="pending" role="status" id="api-pending">${esc(pending)}. Buttons are paused until the lab server answers.</p>`);
+  pauseControls();
+  document.body.dataset.busy = 'true';
+}
+
 let chain: Promise<unknown> = Promise.resolve();
+/** Label of the user command waiting on the server, or null. While set, no other user command can start. */
+let pending: string | null = null;
 
-interface RunOpts { focusTop?: boolean; silent?: boolean; notice?: (s: AppState) => string | null }
+const PENDING_LABEL: Partial<Record<CommandType, string>> = {
+  pairSensor: 'Pairing the sensor (simulated)',
+  testSensor: 'Sending the test event (simulated)',
+  accept: 'Saving the sharing choice',
+  decline: 'Saving the decline',
+  revoke: 'Turning sharing off',
+  share: 'Turning sharing back on',
+  reset: 'Resetting the lab',
+};
 
-/** Commands run one at a time so each carries the latest revision the server gave us. */
+interface RunOpts { focusTop?: boolean; silent?: boolean; background?: boolean; focusAfter?: string; notice?: (s: AppState) => string | null }
+
+/**
+ * A user command is single-flight: it renders the paused state before the request leaves, and a second
+ * click while it is pending is dropped rather than queued, because the button it came from was drawn from
+ * a state the server has not confirmed yet. Background page-view events never pause the UI.
+ * Everything still goes through one chain so each request carries the latest revision the server gave us.
+ */
 function run(type: CommandType, payload: Record<string, unknown> = {}, opts: RunOpts = {}): Promise<boolean> {
+  if (!opts.background) {
+    if (pending) return Promise.resolve(false);
+    pending = PENDING_LABEL[type] ?? 'Saving';
+  }
+  const restoreKey = opts.background ? null : focusKey();
+  if (!opts.background) showPending();
   const p = chain.then(async () => {
     let ok = false;
     try {
@@ -500,7 +548,8 @@ function run(type: CommandType, payload: Record<string, unknown> = {}, opts: Run
         S.error = 'Could not reach the lab server. Nothing was changed.';
       }
     }
-    if (!(opts.silent && ok)) render(ok ? opts.focusTop : false);
+    if (!opts.background) pending = null;
+    if (!(opts.background && ok)) render(ok && !opts.silent ? opts.focusTop : false, ok && opts.focusTop ? null : (ok && opts.focusAfter) || restoreKey);
     return ok;
   });
   chain = p.catch(() => false);
@@ -533,7 +582,7 @@ app.addEventListener('submit', (ev) => {
 
 app.addEventListener('click', (ev) => {
   const b = (ev.target as HTMLElement).closest('button') as HTMLButtonElement | null;
-  if (!b || b.disabled) return;
+  if (!b || b.disabled || b.getAttribute('aria-disabled') === 'true') return;
   const d = b.dataset;
   const id = b.id;
   if (id === 'retry-load') { void boot(); return; }
@@ -548,7 +597,7 @@ app.addEventListener('click', (ev) => {
   else if (id === 'to-setup') go('setup');
   else if (id === 'to-today') go('today');
   else if (id === 'to-week') go('week');
-  else if (d.pair) void run('pairSensor', { sensor: d.pair as SensorId });
+  else if (d.pair) void run('pairSensor', { sensor: d.pair as SensorId }, { focusAfter: `[data-test="${d.pair}"]` });
   else if (d.test) void run('testSensor', { sensor: d.test as SensorId });
   else if (d.feedback) void run('feedback', { answer: d.feedback });
   else if (d.checkin) void run('checkIn', { channel: d.checkin });
