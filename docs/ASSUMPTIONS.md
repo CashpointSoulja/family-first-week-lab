@@ -10,8 +10,8 @@ None of these are validated. "Evidence" means public sources only. Risk = impact
 | A4 | Showing gaps honestly does not reduce return visits. | None | Medium | H3; compare weekly return across coverage states (observational) |
 | A5 | Weekly digest is a better default than daily for trust and return. | None | Medium | Experiment 2 |
 | A6 | Days 1–4 vs 5–7 thresholds (≥1.5/day and ≥40%) produce few false "looks different" flags. | Synthetic only | High | Retrospective check against pilot data with family-labelled "was this useful?" |
-| A7 | Six sensor categories map to the routines families care about. | Lilli's public kit list | Low | Discovery Q3/Q4 |
+| A7 | The prototype's six simulated categories (drinks, meals, time outside, waking up, night-time movement, bathroom visits) map to the routines families care about. | Lilli's families page describes monitoring of sleep, eating, drinking, mobility, bathroom use and time outside; the six categories are my own simplification | Low | Discovery Q3/Q4 |
 | A8 | A check-in suggestion is welcome and not patronising. | None | Medium | `insight_feedback` + qualitative follow-up |
 | A9 | Monitored people will revoke at a low but non-zero rate, and revocation is a healthy signal, not churn to fight. | None | Medium | Monitor `sharing_revoked` as a guardrail, never as a target |
-| A10 | Setup takes around 30 minutes. | Lilli's family page says an average of 30 minutes | Low | `setup_ready.minutes_from_accept` |
-| A11 | Families won't mistake the product for an emergency service. | Lilli publicly says it does not currently detect falls | High | Comprehension check in onboarding; guardrail metric M-G3 |
+| A10 | Setup effort is manageable for the family member and the monitored person. | None. Real setup effort is a discovery question; setup times in the prototype are simulated | Medium | Discovery; `setup_ready.minutes_from_accept` in a pilot |
+| A11 | Families won't mistake the product for an emergency service. | None. The prototype sends no real-time alerts and is not a medical or safety service. Lilli's homepage promotes falls detection for care homes, so families may arrive expecting alerts | High | Comprehension check in onboarding; guardrail metric M-G3 |

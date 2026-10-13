@@ -17,7 +17,7 @@
 | Lack of capacity | Person can't meaningfully consent | Explicitly out of scope with a stop message; no proxy flow | Needs a legal design (e.g. LPA) before any real launch |
 | False reassurance | Hub offline but app looks calm | Stale after 6 h; stale/missing never count; G4 must be zero | Sensor misreads (e.g. a visitor using the kettle) |
 | False alarm | Routine change flagged when they're on holiday | Thresholds, "Sensors can't tell you why", relaxed check-in copy | Some anxiety is unavoidable |
-| Misread as emergency service | Family expects fall alerts | No real-time alerts; copy cites Lilli's public "does not currently detect falls" | Comprehension check needed (G3) |
+| Misread as emergency service | Family expects fall alerts | No real-time alerts, by my design choice; the app footer and README say it is not a medical or safety service | Comprehension check needed (G3). The in-app frequency note still cites a falls statement about Lilli that wasn't confirmed on a later fetch; it is left as is because this is a docs-only correction |
 | Sensitive inference | Bathroom or night data feels intimate | Counts only, "not what happens there"; per-category opt-in; revoke per area | Even counts are sensitive; may warrant extra friction |
 | Data after revocation | Family still sees old insights | Revoking hides earlier insights too (prototype behaviour) | Real retention and deletion policy needed |
 | Analytics leakage | Event properties include identity | Forbidden-property guard; pseudonymous IDs; no raw events | Real pipeline needs DPIA and access controls |
